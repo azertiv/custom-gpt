@@ -29,12 +29,47 @@
   const trackedResponses = new Map();
 
   function ensureBodyFlag() {
-    if (!document.body) {
+    if (!document.body || !document.documentElement) {
       return false;
     }
 
+    document.documentElement.setAttribute(EXTENSION_FLAG, "true");
     document.body.setAttribute(EXTENSION_FLAG, "true");
     return true;
+  }
+
+  function applyChromeClasses() {
+    const singletonSelectors = [
+      ["#stage-slideover-sidebar", "cgwm-sidebar"],
+      ["#stage-sidebar-tiny-bar", "cgwm-sidebar-rail"],
+      ['nav[aria-label="Historique de chat"]', "cgwm-sidebar-scrollport"],
+      ["#sidebar-header", "cgwm-sidebar-header"],
+      ["#page-header", "cgwm-page-header"],
+      ["main#main", "cgwm-main"],
+      ["#thread-bottom", "cgwm-thread-bottom"],
+      ['form[data-type="unified-composer"]', "cgwm-composer"],
+      ['[data-composer-surface="true"]', "cgwm-composer-surface"],
+      ['textarea[name="prompt-textarea"]', "cgwm-composer-textarea"]
+    ];
+
+    singletonSelectors.forEach(([selector, className]) => {
+      const node = document.querySelector(selector);
+      if (node instanceof HTMLElement) {
+        node.classList.add(className);
+      }
+    });
+
+    document.querySelectorAll('[data-sidebar-item="true"]').forEach((node) => {
+      if (node instanceof HTMLElement) {
+        node.classList.add("cgwm-sidebar-item");
+      }
+    });
+
+    document.querySelectorAll(".composer-btn, .composer-submit-btn, .__composer-pill, .__composer-pill-remove").forEach((node) => {
+      if (node instanceof HTMLElement) {
+        node.classList.add("cgwm-composer-control");
+      }
+    });
   }
 
   function visibleText(node) {
@@ -391,6 +426,7 @@
       return;
     }
 
+    applyChromeClasses();
     updateTrackedResponses();
     renderActivePanel();
   }
