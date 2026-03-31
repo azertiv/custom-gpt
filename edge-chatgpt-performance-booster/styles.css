@@ -1,0 +1,146 @@
+html[data-cgpb-extension="true"] {
+  --cgpb-bg: rgba(12, 18, 26, 0.92);
+  --cgpb-panel: rgba(19, 28, 39, 0.94);
+  --cgpb-panel-soft: rgba(56, 75, 97, 0.3);
+  --cgpb-border: rgba(153, 204, 255, 0.18);
+  --cgpb-text: #ecf5ff;
+  --cgpb-text-soft: #bfd4ea;
+  --cgpb-accent: #76d0ff;
+  --cgpb-accent-strong: #48b8ff;
+  --cgpb-shadow: 0 18px 40px rgba(0, 0, 0, 0.28);
+}
+
+html[data-cgpb-enabled="true"][data-cgpb-reduce-effects="true"] body * {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
+html[data-cgpb-enabled="true"][data-cgpb-reduce-effects="true"] body :is(
+  [class*="backdrop"],
+  [class*="blur"],
+  [style*="backdrop-filter"]
+) {
+  backdrop-filter: none !important;
+  filter: none !important;
+}
+
+html[data-cgpb-enabled="true"] .cgpb-managed-turn[data-cgpb-hidden="false"] {
+  content-visibility: auto;
+  contain: layout style paint;
+  contain-intrinsic-size: auto 720px;
+}
+
+html[data-cgpb-enabled="true"] .cgpb-managed-turn[data-cgpb-hidden="true"] {
+  display: none !important;
+}
+
+#cgpb-overlay {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 2147483647;
+  width: min(360px, calc(100vw - 28px));
+  font-family: "Segoe UI", system-ui, sans-serif;
+}
+
+#cgpb-overlay[hidden] {
+  display: none !important;
+}
+
+#cgpb-overlay .cgpb-panel {
+  border: 1px solid var(--cgpb-border);
+  border-radius: 18px;
+  padding: 16px;
+  color: var(--cgpb-text);
+  background:
+    linear-gradient(135deg, rgba(73, 117, 156, 0.24), transparent 48%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 28%),
+    var(--cgpb-panel);
+  box-shadow: var(--cgpb-shadow);
+  backdrop-filter: blur(10px);
+}
+
+#cgpb-overlay .cgpb-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+#cgpb-overlay .cgpb-eyebrow {
+  margin: 0 0 6px;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--cgpb-accent);
+}
+
+#cgpb-overlay .cgpb-title {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.25;
+  font-weight: 600;
+  color: var(--cgpb-text);
+}
+
+#cgpb-overlay .cgpb-mode {
+  flex: none;
+  padding: 6px 10px;
+  border: 1px solid rgba(118, 208, 255, 0.24);
+  border-radius: 999px;
+  background: rgba(118, 208, 255, 0.12);
+  color: var(--cgpb-accent);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+#cgpb-overlay .cgpb-summary {
+  margin: 12px 0 0;
+  color: var(--cgpb-text-soft);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+#cgpb-overlay .cgpb-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+#cgpb-overlay button {
+  appearance: none;
+  border: 1px solid rgba(118, 208, 255, 0.24);
+  border-radius: 999px;
+  padding: 9px 12px;
+  background: linear-gradient(180deg, rgba(118, 208, 255, 0.22), rgba(72, 184, 255, 0.18));
+  color: var(--cgpb-text);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+#cgpb-overlay button:hover {
+  background: linear-gradient(180deg, rgba(118, 208, 255, 0.32), rgba(72, 184, 255, 0.24));
+}
+
+#cgpb-overlay button.cgpb-secondary {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+#cgpb-overlay button[hidden] {
+  display: none !important;
+}
+
+@media (max-width: 720px) {
+  #cgpb-overlay {
+    right: 12px;
+    bottom: 12px;
+    left: 12px;
+    width: auto;
+  }
+}
