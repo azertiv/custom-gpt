@@ -23,7 +23,8 @@
     loadBatchSize: 10,
     trimThreshold: 18,
     showStatusBadge: true,
-    reduceEffects: true
+    reduceEffects: true,
+    pdfExportEnabled: true
   };
   const TURN_SELECTORS = [
     'main [data-message-author-role]',
@@ -83,7 +84,8 @@
       loadBatchSize: clampInteger(raw.loadBatchSize, 1, 40, DEFAULT_SETTINGS.loadBatchSize),
       trimThreshold: clampInteger(raw.trimThreshold, 6, 200, DEFAULT_SETTINGS.trimThreshold),
       showStatusBadge: raw.showStatusBadge !== false,
-      reduceEffects: raw.reduceEffects !== false
+      reduceEffects: raw.reduceEffects !== false,
+      pdfExportEnabled: raw.pdfExportEnabled !== false
     };
   }
 
@@ -120,7 +122,7 @@
 
     const created = {
       manualBoost: 0,
-      expandedReplies: Object.create(null)
+      collapsedReplies: Object.create(null)
     };
     conversationStateCache.set(activeConversationKey, created);
 
@@ -243,8 +245,7 @@
       restoreScrollSnapshot(scrollContainer, scrollSnapshot);
     }
 
-    applyLongReplyControls(turns, conversationState);
-    updateSidebarExportButtons();
+    updateReplyActions(turns, conversationState);
 
     updateOverlay({
       totalCount,
@@ -361,88 +362,226 @@
     return `${getConversationKey()}::${index}::${text}`;
   }
 
-  function applyLongReplyControls(turns, conversationState) {
-    let collapsedCount = 0;
-
+  function updateReplyActions(turns, conversationState) {
     turns.forEach((turn, index) => {
       const role = getTurnRole(turn);
-      if (role !== "assistant") {
-        cleanupLongReplyControl(turn);
+      if (role !== "assistant" || turn.dataset.cgpbHidden === "true") {
+        cleanupReplyEnhancements(turn);
         return;
       }
 
       const content = getTurnContentElement(turn);
       if (!(content instanceof HTMLElement)) {
-        cleanupLongReplyControl(turn);
+        cleanupReplyEnhancements(turn);
         return;
       }
 
+      const slot = ensureReplyActionSlot(turn);
+      if (!(slot instanceof HTMLElement)) {
+        cleanupReplyEnhancements(turn);
+        return;
+      }
+
+      const key = getTurnKey(turn, index);
       const textLength = (content.innerText || content.textContent || "").trim().length;
       const isLong =
         content.scrollHeight > LONG_REPLY_HEIGHT_PX ||
         textLength > LONG_REPLY_TEXT_LENGTH ||
         content.querySelectorAll("pre, table, ul, ol, blockquote").length >= 3;
 
-      if (!isLong) {
-        cleanupLongReplyControl(turn);
-        return;
+      if (isLong) {
+        const isCollapsed = conversationState.collapsedReplies[key] === true;
+        const button = ensureInlineActionButton(slot, "cgpb-collapse-action", "Collapse");
+
+        turn.classList.add("cgpb-collapsible-turn");
+        turn.dataset.cgpbCollapseKey = key;
+        turn.dataset.cgpbCollapsed = isCollapsed ? "true" : "false";
+        content.classList.add("cgpb-long-reply-target");
+        content.dataset.cgpbCollapseKey = key;
+        button.textContent = isCollapsed ? "Expand" : "Collapse";
+        button.setAttribute("aria-expanded", isCollapsed ? "false" : "true");
+        button.onclick = () => {
+          const state = getConversationState();
+          state.collapsedReplies[key] = !(state.collapsedReplies[key] === true);
+          scheduleRefresh();
+        };
+      } else {
+        turn.classList.remove("cgpb-collapsible-turn");
+        turn.removeAttribute("data-cgpb-collapsed");
+        turn.removeAttribute("data-cgpb-collapse-key");
+        content.classList.remove("cgpb-long-reply-target");
+        content.removeAttribute("data-cgpb-collapse-key");
+        removeInlineActionButton(slot, ".cgpb-collapse-action");
       }
 
-      const key = getTurnKey(turn, index);
-      const isExpanded = conversationState.expandedReplies[key] === true;
-      const button = ensureLongReplyButton(turn, key);
+      if (settings.pdfExportEnabled) {
+        const pdfButton = ensureInlineActionButton(slot, "cgpb-pdf-action", "PDF");
+        const exportKey = `reply:${key}`;
+        pdfButton.disabled = activeExports.has(exportKey);
+        pdfButton.setAttribute("data-cgpb-loading", activeExports.has(exportKey) ? "true" : "false");
+        pdfButton.title = "Telecharger cette reponse en PDF";
+        pdfButton.onclick = () => {
+          exportAssistantReplyPdf(turn, index, pdfButton);
+        };
+      } else {
+        removeInlineActionButton(slot, ".cgpb-pdf-action");
+      }
 
-      turn.classList.add("cgpb-collapsible-turn");
-      content.classList.add("cgpb-long-reply-target");
-      content.dataset.cgpbCollapseKey = key;
-      turn.dataset.cgpbCollapseKey = key;
-      turn.dataset.cgpbCollapsed = isExpanded ? "false" : "true";
-      button.textContent = isExpanded ? "Replier" : "Déplier";
-      button.setAttribute("aria-expanded", isExpanded ? "true" : "false");
-
-      if (!isExpanded) {
-        collapsedCount += 1;
+      if (!slot.childElementCount) {
+        slot.remove();
       }
     });
-
-    return collapsedCount;
   }
 
-  function ensureLongReplyButton(turn, key) {
-    let button = turn.querySelector(":scope > .cgpb-long-reply-toggle");
-    if (button instanceof HTMLButtonElement) {
-      button.dataset.cgpbCollapseKey = key;
-      return button;
-    }
-
-    button = document.createElement("button");
-    button.type = "button";
-    button.className = "cgpb-long-reply-toggle";
-    button.dataset.cgpbCollapseKey = key;
-    button.addEventListener("click", () => {
-      const state = getConversationState();
-      const collapseKey = button.dataset.cgpbCollapseKey;
-      state.expandedReplies[collapseKey] = !(state.expandedReplies[collapseKey] === true);
-      scheduleRefresh();
-    });
-    turn.appendChild(button);
-    return button;
-  }
-
-  function cleanupLongReplyControl(turn) {
+  function cleanupReplyEnhancements(turn) {
     turn.classList.remove("cgpb-collapsible-turn");
     turn.removeAttribute("data-cgpb-collapsed");
     turn.removeAttribute("data-cgpb-collapse-key");
-
-    const button = turn.querySelector(":scope > .cgpb-long-reply-toggle");
-    if (button) {
-      button.remove();
-    }
 
     turn.querySelectorAll(".cgpb-long-reply-target").forEach((node) => {
       node.classList.remove("cgpb-long-reply-target");
       node.removeAttribute("data-cgpb-collapse-key");
     });
+
+    const slot = turn.querySelector(".cgpb-inline-slot");
+    if (slot) {
+      slot.remove();
+    }
+  }
+
+  function ensureReplyActionSlot(turn) {
+    const existing = turn.querySelector(".cgpb-inline-slot");
+    if (existing instanceof HTMLElement) {
+      return existing;
+    }
+
+    const host = getLikelyActionBar(turn);
+    const slot = document.createElement("div");
+    slot.className = "cgpb-inline-slot";
+
+    if (host instanceof HTMLElement) {
+      host.appendChild(slot);
+      return slot;
+    }
+
+    const content = getTurnContentElement(turn);
+    if (content instanceof HTMLElement) {
+      slot.classList.add("cgpb-inline-slot-fallback");
+      content.insertAdjacentElement("afterend", slot);
+      return slot;
+    }
+
+    return null;
+  }
+
+  function getLikelyActionBar(turn) {
+    const buttons = Array.from(turn.querySelectorAll("button")).filter((button) => {
+      if (!(button instanceof HTMLButtonElement)) {
+        return false;
+      }
+
+      if (button.closest("#cgpb-overlay") || button.closest(".cgpb-inline-slot") || button.closest("pre")) {
+        return false;
+      }
+
+      return button.getClientRects().length > 0;
+    });
+
+    if (!buttons.length) {
+      return null;
+    }
+
+    const maxBottom = Math.max(...buttons.map((button) => button.getBoundingClientRect().bottom));
+    const bottomButtons = buttons.filter((button) => maxBottom - button.getBoundingClientRect().bottom < 24);
+    const parentCounts = new Map();
+
+    bottomButtons.forEach((button) => {
+      const parent = button.parentElement;
+      if (parent && parent !== turn) {
+        parentCounts.set(parent, (parentCounts.get(parent) || 0) + 1);
+      }
+    });
+
+    let bestParent = null;
+    let bestScore = -1;
+
+    parentCounts.forEach((score, parent) => {
+      if (score > bestScore) {
+        bestParent = parent;
+        bestScore = score;
+      }
+    });
+
+    if (bestParent instanceof HTMLElement) {
+      return bestParent;
+    }
+
+    return bottomButtons[0]?.parentElement || null;
+  }
+
+  function ensureInlineActionButton(slot, className, label) {
+    let button = slot.querySelector(`.${className}`);
+    if (button instanceof HTMLButtonElement) {
+      return button;
+    }
+
+    button = document.createElement("button");
+    button.type = "button";
+    button.className = `cgpb-inline-action ${className}`;
+    button.textContent = label;
+    slot.appendChild(button);
+    return button;
+  }
+
+  function removeInlineActionButton(slot, selector) {
+    const button = slot.querySelector(selector);
+    if (button) {
+      button.remove();
+    }
+  }
+
+  async function exportAssistantReplyPdf(turn, index, button) {
+    const key = `reply:${getTurnKey(turn, index)}`;
+    if (activeExports.has(key)) {
+      return;
+    }
+
+    activeExports.add(key);
+    button.disabled = true;
+    button.setAttribute("data-cgpb-loading", "true");
+
+    try {
+      const replyText = collectTurnText(turn);
+      if (!replyText) {
+        throw new Error("Empty reply");
+      }
+
+      const title = getCurrentConversationTitle() || "ChatGPT";
+      const pdfBytes = buildPdfDocument({
+        title,
+        messages: [
+          {
+            role: "assistant",
+            text: replyText
+          }
+        ]
+      });
+      const blob = new Blob([pdfBytes], { type: "application/pdf" });
+      const fileName = `${slugify(title)}-reply-${index + 1}.pdf`;
+      triggerDownload(blob, fileName);
+    } catch (error) {
+      console.error("ChatGPT Performance Booster: response PDF export failed", error);
+    } finally {
+      activeExports.delete(key);
+      button.disabled = false;
+      button.setAttribute("data-cgpb-loading", "false");
+      scheduleRefresh();
+    }
+  }
+
+  function collectTurnText(turn) {
+    const content = getTurnContentElement(turn);
+    return normalizeExportText(content?.innerText || turn.innerText || "");
   }
 
   function getScrollContainer(turns) {
@@ -562,258 +701,6 @@
       overlayRevealAllButton.setAttribute("aria-disabled", revealAll ? "false" : "true");
       overlayRevealAllButton.title = revealAll ? "Afficher toute la conversation" : "Toute la conversation est deja visible";
     }
-  }
-
-  function updateSidebarExportButtons() {
-    document.querySelectorAll('a[href*="/c/"]').forEach((link) => {
-      if (!(link instanceof HTMLAnchorElement)) {
-        return;
-      }
-
-      const conversationId = extractConversationId(link.href);
-      if (!conversationId) {
-        return;
-      }
-
-      const host = link.closest('[data-sidebar-item="true"]') || link.parentElement;
-      if (!(host instanceof HTMLElement)) {
-        return;
-      }
-
-      host.classList.add("cgpb-sidebar-export-host");
-
-      let button = host.querySelector(":scope > .cgpb-export-button");
-      if (!(button instanceof HTMLButtonElement)) {
-        button = document.createElement("button");
-        button.type = "button";
-        button.className = "cgpb-export-button";
-        button.innerHTML = [
-          '<svg viewBox="0 0 16 16" aria-hidden="true" focusable="false">',
-          '  <path d="M8 2v7"></path>',
-          '  <path d="M5 7.5 8 10.5 11 7.5"></path>',
-          '  <path d="M3 12.5h10"></path>',
-          "</svg>"
-        ].join("");
-        button.setAttribute("aria-label", "Telecharger la discussion en PDF");
-        button.title = "Telecharger la discussion en PDF";
-        button.addEventListener("click", async (event) => {
-          event.preventDefault();
-          event.stopPropagation();
-
-          const targetButton = event.currentTarget;
-          if (!(targetButton instanceof HTMLButtonElement)) {
-            return;
-          }
-
-          const targetConversationId = targetButton.dataset.cgpbConversationId;
-          const targetTitle = targetButton.dataset.cgpbConversationTitle || "discussion-chatgpt";
-          await exportConversationPdf(targetConversationId, targetTitle, targetButton);
-        });
-        host.appendChild(button);
-      }
-
-      button.dataset.cgpbConversationId = conversationId;
-      button.dataset.cgpbConversationTitle = (link.textContent || "discussion-chatgpt").trim();
-      button.disabled = activeExports.has(conversationId);
-      button.setAttribute("data-cgpb-loading", activeExports.has(conversationId) ? "true" : "false");
-    });
-  }
-
-  function extractConversationId(url) {
-    try {
-      const parsed = new URL(url, location.origin);
-      const match = parsed.pathname.match(/\/c\/([a-zA-Z0-9-]+)/);
-      return match ? match[1] : "";
-    } catch (_error) {
-      const match = String(url).match(/\/c\/([a-zA-Z0-9-]+)/);
-      return match ? match[1] : "";
-    }
-  }
-
-  async function exportConversationPdf(conversationId, fallbackTitle, button) {
-    if (!conversationId || activeExports.has(conversationId)) {
-      return;
-    }
-
-    activeExports.add(conversationId);
-    if (button) {
-      button.disabled = true;
-      button.setAttribute("data-cgpb-loading", "true");
-    }
-
-    try {
-      const conversation = await loadConversationForExport(conversationId, fallbackTitle);
-      const pdfBytes = buildPdfDocument(conversation);
-      const blob = new Blob([pdfBytes], { type: "application/pdf" });
-      const fileName = `${slugify(conversation.title || fallbackTitle || "chatgpt-discussion")}.pdf`;
-      triggerDownload(blob, fileName);
-    } catch (error) {
-      console.error("ChatGPT Performance Booster: PDF export failed", error);
-    } finally {
-      activeExports.delete(conversationId);
-      if (button) {
-        button.disabled = false;
-        button.setAttribute("data-cgpb-loading", "false");
-      }
-      scheduleRefresh();
-    }
-  }
-
-  async function loadConversationForExport(conversationId, fallbackTitle) {
-    const candidates = [
-      `/backend-api/conversation/${conversationId}`,
-      `/backend-api/conversation/${conversationId}?tree=true&rendering_mode=default`,
-      `/backend-api/conversation/${conversationId}?history_and_training_disabled=false`
-    ];
-
-    for (const url of candidates) {
-      try {
-        const response = await fetch(url, {
-          credentials: "include"
-        });
-
-        if (!response.ok) {
-          continue;
-        }
-
-        const payload = await response.json();
-        const conversation = parseConversationPayload(payload, fallbackTitle);
-        if (conversation.messages.length > 0) {
-          return conversation;
-        }
-      } catch (_error) {
-        continue;
-      }
-    }
-
-    const currentConversationId = extractConversationId(location.href);
-    if (currentConversationId === conversationId) {
-      const fromDom = parseConversationFromDom(fallbackTitle);
-      if (fromDom.messages.length > 0) {
-        return fromDom;
-      }
-    }
-
-    throw new Error("Conversation data unavailable");
-  }
-
-  function parseConversationPayload(payload, fallbackTitle) {
-    const messages = [];
-    const mapping = payload?.mapping || payload?.conversation?.mapping;
-
-    if (mapping && typeof mapping === "object") {
-      Object.values(mapping).forEach((node) => {
-        const message = node?.message;
-        const role = message?.author?.role || "";
-        if (!message || (role !== "user" && role !== "assistant")) {
-          return;
-        }
-
-        const text = extractMessageText(message?.content);
-        if (!text) {
-          return;
-        }
-
-        messages.push({
-          role,
-          text,
-          createdAt: Number(message?.create_time || node?.create_time || 0)
-        });
-      });
-    } else if (Array.isArray(payload?.messages)) {
-      payload.messages.forEach((message, index) => {
-        const role = message?.author?.role || "";
-        if (role !== "user" && role !== "assistant") {
-          return;
-        }
-
-        const text = extractMessageText(message?.content);
-        if (!text) {
-          return;
-        }
-
-        messages.push({
-          role,
-          text,
-          createdAt: Number(message?.create_time || index)
-        });
-      });
-    }
-
-    messages.sort((left, right) => left.createdAt - right.createdAt);
-
-    return {
-      title: String(payload?.title || fallbackTitle || "ChatGPT discussion").trim(),
-      messages
-    };
-  }
-
-  function extractMessageText(content) {
-    if (!content) {
-      return "";
-    }
-
-    if (typeof content === "string") {
-      return normalizeExportText(content);
-    }
-
-    if (Array.isArray(content?.parts)) {
-      return normalizeExportText(
-        content.parts
-          .map((part) => {
-            if (typeof part === "string") {
-              return part;
-            }
-
-            if (part && typeof part.text === "string") {
-              return part.text;
-            }
-
-            return "";
-          })
-          .filter(Boolean)
-          .join("\n\n")
-      );
-    }
-
-    if (typeof content?.text === "string") {
-      return normalizeExportText(content.text);
-    }
-
-    if (Array.isArray(content?.text)) {
-      return normalizeExportText(content.text.join("\n"));
-    }
-
-    return "";
-  }
-
-  function parseConversationFromDom(fallbackTitle) {
-    const turns = getTurnContainers();
-    const messages = turns
-      .map((turn, index) => {
-        const role = getTurnRole(turn);
-        if (role !== "user" && role !== "assistant") {
-          return null;
-        }
-
-        const content = getTurnContentElement(turn);
-        const text = normalizeExportText(content?.innerText || turn.innerText || "");
-        if (!text) {
-          return null;
-        }
-
-        return {
-          role,
-          text,
-          createdAt: index
-        };
-      })
-      .filter(Boolean);
-
-    return {
-      title: getCurrentConversationTitle() || fallbackTitle || "ChatGPT discussion",
-      messages
-    };
   }
 
   function getCurrentConversationTitle() {

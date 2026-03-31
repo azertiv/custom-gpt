@@ -5,7 +5,8 @@ const DEFAULT_SETTINGS = {
   loadBatchSize: 10,
   trimThreshold: 18,
   showStatusBadge: true,
-  reduceEffects: true
+  reduceEffects: true,
+  pdfExportEnabled: true
 };
 
 chrome.runtime.onInstalled.addListener(() => {
