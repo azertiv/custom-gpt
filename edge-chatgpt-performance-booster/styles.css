@@ -36,6 +36,99 @@ html[data-cgpb-enabled="true"] .cgpb-managed-turn[data-cgpb-hidden="true"] {
   display: none !important;
 }
 
+html[data-cgpb-enabled="true"] .cgpb-collapsible-turn {
+  position: relative;
+}
+
+html[data-cgpb-enabled="true"] .cgpb-long-reply-target {
+  transition: max-height 160ms ease;
+}
+
+html[data-cgpb-enabled="true"] .cgpb-collapsible-turn[data-cgpb-collapsed="true"] .cgpb-long-reply-target {
+  position: relative;
+  max-height: 320px;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 76%, transparent 100%);
+  mask-image: linear-gradient(180deg, #000 0%, #000 76%, transparent 100%);
+}
+
+html[data-cgpb-enabled="true"] .cgpb-long-reply-toggle {
+  position: sticky;
+  top: 12px;
+  z-index: 5;
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: fit-content;
+  min-width: 88px;
+  padding: 7px 12px;
+  border: 1px solid rgba(118, 208, 255, 0.24);
+  border-radius: 999px;
+  background: rgba(13, 20, 29, 0.92);
+  color: var(--cgpb-text);
+  cursor: pointer;
+  font: 600 12px/1 "Segoe UI", system-ui, sans-serif;
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.18);
+}
+
+html[data-cgpb-enabled="true"] .cgpb-long-reply-toggle:hover {
+  background: rgba(18, 29, 42, 0.98);
+}
+
+html[data-cgpb-enabled="true"] .cgpb-sidebar-export-host {
+  position: relative;
+}
+
+html[data-cgpb-enabled="true"] .cgpb-export-button {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  transform: translateY(-50%);
+  z-index: 6;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid rgba(118, 208, 255, 0.18);
+  border-radius: 999px;
+  background: rgba(13, 20, 29, 0.88);
+  color: var(--cgpb-text-soft);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 120ms ease, background-color 120ms ease, color 120ms ease;
+}
+
+html[data-cgpb-enabled="true"] .cgpb-sidebar-export-host:hover .cgpb-export-button,
+html[data-cgpb-enabled="true"] .cgpb-sidebar-export-host:focus-within .cgpb-export-button,
+html[data-cgpb-enabled="true"] .cgpb-export-button[data-cgpb-loading="true"] {
+  opacity: 1;
+}
+
+html[data-cgpb-enabled="true"] .cgpb-export-button:hover {
+  background: rgba(27, 42, 58, 0.96);
+  color: var(--cgpb-text);
+}
+
+html[data-cgpb-enabled="true"] .cgpb-export-button[disabled] {
+  cursor: progress;
+}
+
+html[data-cgpb-enabled="true"] .cgpb-export-button svg {
+  width: 14px;
+  height: 14px;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+html[data-cgpb-enabled="true"] .cgpb-export-button[data-cgpb-loading="true"] svg {
+  animation: cgpb-pulse 900ms ease-in-out infinite;
+}
+
 #cgpb-overlay {
   position: fixed;
   right: 18px;
@@ -105,6 +198,14 @@ html[data-cgpb-enabled="true"] .cgpb-managed-turn[data-cgpb-hidden="true"] {
   line-height: 1.45;
 }
 
+#cgpb-overlay .cgpb-summary[data-cgpb-notice="success"] {
+  color: #9af7d1;
+}
+
+#cgpb-overlay .cgpb-summary[data-cgpb-notice="error"] {
+  color: #ffb9b9;
+}
+
 #cgpb-overlay .cgpb-actions {
   display: flex;
   flex-wrap: wrap;
@@ -142,5 +243,16 @@ html[data-cgpb-enabled="true"] .cgpb-managed-turn[data-cgpb-hidden="true"] {
     bottom: 12px;
     left: 12px;
     width: auto;
+  }
+}
+
+@keyframes cgpb-pulse {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+
+  50% {
+    opacity: 1;
   }
 }

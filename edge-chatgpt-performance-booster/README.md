@@ -12,6 +12,8 @@ Le nouveau socle est oriente performance:
 - masque les anciens messages pour reduire la charge memoire et le cout de rendu
 - permet de recharger l'historique par batch avec `Afficher plus`
 - reapplique automatiquement une fenetre glissante quand une conversation continue de grandir
+- replie automatiquement les longues reponses avec un bouton `Deplier` / `Replier`
+- ajoute une icone sur chaque discussion de la sidebar pour exporter un PDF compact et minimaliste
 - propose une popup pour regler l'optimisation
 - peut reduire animations, transitions et flous couteux
 
