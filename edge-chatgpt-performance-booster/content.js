@@ -464,13 +464,6 @@
       return slot;
     }
 
-    const content = getTurnContentElement(turn);
-    if (content instanceof HTMLElement) {
-      slot.classList.add("cgpb-inline-slot-fallback");
-      content.insertAdjacentElement("afterend", slot);
-      return slot;
-    }
-
     return null;
   }
 
@@ -493,6 +486,9 @@
 
     const maxBottom = Math.max(...buttons.map((button) => button.getBoundingClientRect().bottom));
     const bottomButtons = buttons.filter((button) => maxBottom - button.getBoundingClientRect().bottom < 24);
+    if (bottomButtons.length < 2) {
+      return null;
+    }
     const parentCounts = new Map();
 
     bottomButtons.forEach((button) => {
