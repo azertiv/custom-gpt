@@ -8,78 +8,57 @@
   </head>
   <body>
     <main class="popup">
-      <header class="hero">
-        <p class="eyebrow">ChatGPT Performance Booster</p>
-        <h1>Optimisation locale du rendu</h1>
-        <p class="lede">
-          L'extension garde surtout les messages recents dans le DOM pour rendre les longues conversations plus fluides.
-        </p>
-      </header>
-
-      <section class="card card-highlight">
-        <div class="row row-space">
+      <section class="panel">
+        <div class="row top-row">
           <div>
-            <p class="label">Booster global</p>
-            <p class="hint">Active ou desactive le trimming et les optimisations locales.</p>
+            <p class="title">Booster</p>
+            <p class="subtle">Reglages locaux</p>
           </div>
-          <label class="switch">
+          <label class="switch" aria-label="Activer le booster">
             <input id="enabled" type="checkbox">
             <span class="slider"></span>
           </label>
         </div>
-      </section>
 
-      <section class="card">
         <div class="field">
-          <label for="visibleCount">Messages gardes visibles</label>
-          <div class="value-line">
-            <input id="visibleCount" type="range" min="3" max="80" step="1">
+          <div class="field-head">
+            <label for="visibleCount">Visible</label>
             <output id="visibleCountValue">12</output>
           </div>
-          <p class="hint">Plus la valeur est basse, plus le DOM est leger.</p>
+          <input id="visibleCount" type="range" min="3" max="80" step="1">
         </div>
 
         <div class="field">
-          <label for="loadBatchSize">Batch "Afficher plus"</label>
-          <div class="value-line">
-            <input id="loadBatchSize" type="range" min="1" max="40" step="1">
+          <div class="field-head">
+            <label for="loadBatchSize">More</label>
             <output id="loadBatchSizeValue">10</output>
           </div>
-          <p class="hint">Controle le nombre de messages restitues a chaque clic.</p>
+          <input id="loadBatchSize" type="range" min="1" max="40" step="1">
         </div>
 
         <div class="field">
-          <label for="trimThreshold">Seuil avant optimisation</label>
-          <div class="value-line">
-            <input id="trimThreshold" type="range" min="6" max="200" step="1">
+          <div class="field-head">
+            <label for="trimThreshold">Start</label>
             <output id="trimThresholdValue">18</output>
           </div>
-          <p class="hint">Les conversations plus courtes que ce seuil restent intactes.</p>
+          <input id="trimThreshold" type="range" min="6" max="200" step="1">
+        </div>
+
+        <label class="toggle-row">
+          <span>Reduce effects</span>
+          <input id="reduceEffects" type="checkbox">
+        </label>
+
+        <label class="toggle-row">
+          <span>Show overlay</span>
+          <input id="showStatusBadge" type="checkbox">
+        </label>
+
+        <div class="footer">
+          <button id="resetDefaults" type="button">Reset</button>
+          <p id="status">Saved</p>
         </div>
       </section>
-
-      <section class="card">
-        <label class="check-row">
-          <input id="reduceEffects" type="checkbox">
-          <span>
-            <strong>Reduire les effets couteux</strong>
-            <small>Coupe animations, transitions et certains effets de flou.</small>
-          </span>
-        </label>
-
-        <label class="check-row">
-          <input id="showStatusBadge" type="checkbox">
-          <span>
-            <strong>Afficher le badge in-page</strong>
-            <small>Expose l'etat courant, les statistiques et les actions "Afficher plus".</small>
-          </span>
-        </label>
-      </section>
-
-      <footer class="footer">
-        <button id="resetDefaults" class="ghost" type="button">Restaurer les reglages</button>
-        <p id="status">Reglages synchronises localement.</p>
-      </footer>
     </main>
 
     <script src="popup.js"></script>

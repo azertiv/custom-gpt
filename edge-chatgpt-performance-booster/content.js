@@ -37,12 +37,8 @@
   let navigationTimer = 0;
   let activeConversationKey = getConversationKey();
   let overlay = null;
-  let overlaySummary = null;
-  let overlayMode = null;
   let overlayLoadButton = null;
-  let overlayResetButton = null;
   let overlayRevealAllButton = null;
-  let overlayNoticeTimer = 0;
   const conversationStateCache = new Map();
   const activeExports = new Set();
 
@@ -247,16 +243,14 @@
       restoreScrollSnapshot(scrollContainer, scrollSnapshot);
     }
 
-    const collapsedCount = applyLongReplyControls(turns, conversationState);
+    applyLongReplyControls(turns, conversationState);
     updateSidebarExportButtons();
 
     updateOverlay({
       totalCount,
       targetVisibleCount,
       hiddenCount,
-      manualBoost: conversationState.manualBoost,
-      shouldTrim,
-      collapsedCount
+      shouldTrim
     });
   }
 
@@ -512,37 +506,19 @@
     overlay.id = OVERLAY_ID;
     overlay.innerHTML = [
       '<div class="cgpb-panel">',
-      '  <div class="cgpb-header">',
-      '    <div>',
-      '      <p class="cgpb-eyebrow">Performance Booster</p>',
-      '      <h2 class="cgpb-title">ChatGPT optimise localement le rendu</h2>',
-      "    </div>",
-      '    <span class="cgpb-mode" id="cgpb-mode">Actif</span>',
-      "  </div>",
-      '  <p class="cgpb-summary" id="cgpb-summary"></p>',
       '  <div class="cgpb-actions">',
-      '    <button type="button" id="cgpb-load-more">Afficher plus</button>',
-      '    <button type="button" id="cgpb-reset-window" class="cgpb-secondary">Mode rapide</button>',
-      '    <button type="button" id="cgpb-reveal-all" class="cgpb-secondary">Tout afficher</button>',
+      '    <button type="button" id="cgpb-load-more">More</button>',
+      '    <button type="button" id="cgpb-reveal-all">All</button>',
       "  </div>",
       "</div>"
     ].join("");
 
-    overlaySummary = overlay.querySelector("#cgpb-summary");
-    overlayMode = overlay.querySelector("#cgpb-mode");
     overlayLoadButton = overlay.querySelector("#cgpb-load-more");
-    overlayResetButton = overlay.querySelector("#cgpb-reset-window");
     overlayRevealAllButton = overlay.querySelector("#cgpb-reveal-all");
 
     overlayLoadButton?.addEventListener("click", () => {
       const state = getConversationState();
       state.manualBoost += settings.loadBatchSize;
-      scheduleRefresh();
-    });
-
-    overlayResetButton?.addEventListener("click", () => {
-      const state = getConversationState();
-      state.manualBoost = 0;
       scheduleRefresh();
     });
 
@@ -556,8 +532,8 @@
     document.documentElement.appendChild(overlay);
   }
 
-  function updateOverlay({ totalCount, targetVisibleCount, hiddenCount, manualBoost, shouldTrim, collapsedCount }) {
-    if (!overlay || !overlaySummary || !overlayMode) {
+  function updateOverlay({ totalCount, targetVisibleCount, hiddenCount, shouldTrim }) {
+    if (!overlay) {
       return;
     }
 
@@ -568,44 +544,23 @@
       return;
     }
 
-    overlayMode.textContent = settings.reduceEffects ? "Actif + effets reduits" : "Actif";
-
-    if (!shouldTrim) {
-      overlaySummary.textContent =
-        collapsedCount > 0
-          ? `Conversation courte. ${collapsedCount} longue${collapsedCount > 1 ? "s" : ""} reponse${collapsedCount > 1 ? "s" : ""} repliee${collapsedCount > 1 ? "s" : ""}.`
-          : "Conversation courte: aucun message masque pour l'instant.";
-      toggleActionButtons({
-        loadMore: false,
-        reset: manualBoost > 0,
-        revealAll: false
-      });
-      return;
-    }
-
-    const collapsedText =
-      collapsedCount > 0 ? ` ${collapsedCount} longue${collapsedCount > 1 ? "s" : ""} reponse${collapsedCount > 1 ? "s" : ""} sont repliee${collapsedCount > 1 ? "s" : ""}.` : "";
-
-    overlaySummary.textContent = `${targetVisibleCount} messages visibles sur ${totalCount}. ${hiddenCount} messages plus anciens sont masques pour alleger le DOM.${collapsedText}`;
     toggleActionButtons({
       loadMore: hiddenCount > 0,
-      reset: manualBoost > 0,
-      revealAll: hiddenCount > 0
+      revealAll: shouldTrim && targetVisibleCount < totalCount
     });
   }
 
-  function toggleActionButtons({ loadMore, reset, revealAll }) {
+  function toggleActionButtons({ loadMore, revealAll }) {
     if (overlayLoadButton) {
-      overlayLoadButton.hidden = !loadMore;
-      overlayLoadButton.textContent = `Afficher ${settings.loadBatchSize} de plus`;
-    }
-
-    if (overlayResetButton) {
-      overlayResetButton.hidden = !reset;
+      overlayLoadButton.disabled = !loadMore;
+      overlayLoadButton.setAttribute("aria-disabled", loadMore ? "false" : "true");
+      overlayLoadButton.title = loadMore ? `Afficher ${settings.loadBatchSize} messages de plus` : "Aucun message supplementaire masque";
     }
 
     if (overlayRevealAllButton) {
-      overlayRevealAllButton.hidden = !revealAll;
+      overlayRevealAllButton.disabled = !revealAll;
+      overlayRevealAllButton.setAttribute("aria-disabled", revealAll ? "false" : "true");
+      overlayRevealAllButton.title = revealAll ? "Afficher toute la conversation" : "Toute la conversation est deja visible";
     }
   }
 
@@ -692,10 +647,8 @@
       const blob = new Blob([pdfBytes], { type: "application/pdf" });
       const fileName = `${slugify(conversation.title || fallbackTitle || "chatgpt-discussion")}.pdf`;
       triggerDownload(blob, fileName);
-      showOverlayNotice(`PDF genere: ${fileName}`);
     } catch (error) {
       console.error("ChatGPT Performance Booster: PDF export failed", error);
-      showOverlayNotice("Impossible de generer le PDF pour cette discussion.", true);
     } finally {
       activeExports.delete(conversationId);
       if (button) {
@@ -1121,25 +1074,5 @@
       .replace(/[^a-zA-Z0-9]+/g, "-")
       .replace(/^-+|-+$/g, "")
       .toLowerCase() || "chatgpt-discussion";
-  }
-
-  function showOverlayNotice(message, isError) {
-    if (!overlaySummary) {
-      return;
-    }
-
-    window.clearTimeout(overlayNoticeTimer);
-    const previousText = overlaySummary.textContent;
-    overlaySummary.textContent = message;
-    overlaySummary.setAttribute("data-cgpb-notice", isError ? "error" : "success");
-
-    overlayNoticeTimer = window.setTimeout(() => {
-      overlaySummary.removeAttribute("data-cgpb-notice");
-      if (overlaySummary.textContent === message) {
-        scheduleRefresh();
-      } else {
-        overlaySummary.textContent = previousText;
-      }
-    }, 2800);
   }
 })();
