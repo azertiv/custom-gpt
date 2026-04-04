@@ -54,6 +54,40 @@
           <input id="showStatusBadge" type="checkbox">
         </label>
 
+        <label class="toggle-row">
+          <span>Cleanup on switch</span>
+          <input id="cleanupOnSwitch" type="checkbox">
+        </label>
+
+        <label class="toggle-row">
+          <span>Lazy render media</span>
+          <input id="lazyRenderMedia" type="checkbox">
+        </label>
+
+        <div class="field">
+          <div class="field-head">
+            <label for="lazyRenderMargin">Lazy margin (px)</label>
+            <output id="lazyRenderMarginValue">300</output>
+          </div>
+          <input id="lazyRenderMargin" type="range" min="0" max="1000" step="50">
+        </div>
+
+        <div class="field">
+          <div class="field-head">
+            <label for="observerThrottleMs">Observer (ms)</label>
+            <output id="observerThrottleMsValue">80</output>
+          </div>
+          <input id="observerThrottleMs" type="range" min="16" max="500" step="1">
+        </div>
+
+        <div class="field">
+          <div class="field-head">
+            <label for="scrollDebounceMs">Scroll (ms)</label>
+            <output id="scrollDebounceMsValue">100</output>
+          </div>
+          <input id="scrollDebounceMs" type="range" min="16" max="500" step="1">
+        </div>
+
         <div class="footer">
           <button id="resetDefaults" type="button">Reset</button>
           <p id="status">Saved</p>

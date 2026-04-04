@@ -444,3 +444,12 @@ html[data-cgpb-enabled="true"] .cgpb-managed-turn[data-cgpb-hidden="true"] {
   }
 }
 
+/* ═══════════════════════════════════════════════════════
+   12. Lazy rendering placeholders
+   ═══════════════════════════════════════════════════════ */
+html[data-cgpb-enabled="true"] .cgpb-lazy-placeholder {
+  background: var(--cgpb-panel-soft, rgba(255, 248, 230, 0.06));
+  border-radius: 8px;
+  min-height: 40px;
+}
+

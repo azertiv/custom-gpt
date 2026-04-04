@@ -5,7 +5,12 @@ const DEFAULT_SETTINGS = {
   loadBatchSize: 10,
   trimThreshold: 18,
   showStatusBadge: true,
-  reduceEffects: true
+  reduceEffects: true,
+  cleanupOnSwitch: false,
+  lazyRenderMedia: true,
+  lazyRenderMargin: 300,
+  observerThrottleMs: 80,
+  scrollDebounceMs: 100
 };
 
 const formElements = {
@@ -18,6 +23,14 @@ const formElements = {
   trimThresholdValue: document.getElementById("trimThresholdValue"),
   reduceEffects: document.getElementById("reduceEffects"),
   showStatusBadge: document.getElementById("showStatusBadge"),
+  cleanupOnSwitch: document.getElementById("cleanupOnSwitch"),
+  lazyRenderMedia: document.getElementById("lazyRenderMedia"),
+  lazyRenderMargin: document.getElementById("lazyRenderMargin"),
+  lazyRenderMarginValue: document.getElementById("lazyRenderMarginValue"),
+  observerThrottleMs: document.getElementById("observerThrottleMs"),
+  observerThrottleMsValue: document.getElementById("observerThrottleMsValue"),
+  scrollDebounceMs: document.getElementById("scrollDebounceMs"),
+  scrollDebounceMsValue: document.getElementById("scrollDebounceMsValue"),
   resetDefaults: document.getElementById("resetDefaults"),
   status: document.getElementById("status")
 };
@@ -41,7 +54,12 @@ function normalizeSettings(raw) {
     loadBatchSize: clamp(raw.loadBatchSize, 1, 40, DEFAULT_SETTINGS.loadBatchSize),
     trimThreshold: clamp(raw.trimThreshold, 6, 200, DEFAULT_SETTINGS.trimThreshold),
     showStatusBadge: raw.showStatusBadge !== false,
-    reduceEffects: raw.reduceEffects !== false
+    reduceEffects: raw.reduceEffects !== false,
+    cleanupOnSwitch: raw.cleanupOnSwitch === true,
+    lazyRenderMedia: raw.lazyRenderMedia !== false,
+    lazyRenderMargin: clamp(raw.lazyRenderMargin, 0, 1000, DEFAULT_SETTINGS.lazyRenderMargin),
+    observerThrottleMs: clamp(raw.observerThrottleMs, 16, 500, DEFAULT_SETTINGS.observerThrottleMs),
+    scrollDebounceMs: clamp(raw.scrollDebounceMs, 16, 500, DEFAULT_SETTINGS.scrollDebounceMs)
   };
 }
 
@@ -57,16 +75,21 @@ function clamp(value, min, max, fallback) {
 function render(settings) {
   formElements.enabled.checked = settings.enabled;
   formElements.visibleCount.value = String(settings.visibleCount);
-  formElements.visibleCountValue.value = String(settings.visibleCount);
   formElements.visibleCountValue.textContent = String(settings.visibleCount);
   formElements.loadBatchSize.value = String(settings.loadBatchSize);
-  formElements.loadBatchSizeValue.value = String(settings.loadBatchSize);
   formElements.loadBatchSizeValue.textContent = String(settings.loadBatchSize);
   formElements.trimThreshold.value = String(settings.trimThreshold);
-  formElements.trimThresholdValue.value = String(settings.trimThreshold);
   formElements.trimThresholdValue.textContent = String(settings.trimThreshold);
   formElements.reduceEffects.checked = settings.reduceEffects;
   formElements.showStatusBadge.checked = settings.showStatusBadge;
+  formElements.cleanupOnSwitch.checked = settings.cleanupOnSwitch;
+  formElements.lazyRenderMedia.checked = settings.lazyRenderMedia;
+  formElements.lazyRenderMargin.value = String(settings.lazyRenderMargin);
+  formElements.lazyRenderMarginValue.textContent = String(settings.lazyRenderMargin);
+  formElements.observerThrottleMs.value = String(settings.observerThrottleMs);
+  formElements.observerThrottleMsValue.textContent = String(settings.observerThrottleMs);
+  formElements.scrollDebounceMs.value = String(settings.scrollDebounceMs);
+  formElements.scrollDebounceMsValue.textContent = String(settings.scrollDebounceMs);
 }
 
 function attachListeners() {
@@ -76,7 +99,12 @@ function attachListeners() {
     formElements.loadBatchSize,
     formElements.trimThreshold,
     formElements.reduceEffects,
-    formElements.showStatusBadge
+    formElements.showStatusBadge,
+    formElements.cleanupOnSwitch,
+    formElements.lazyRenderMedia,
+    formElements.lazyRenderMargin,
+    formElements.observerThrottleMs,
+    formElements.scrollDebounceMs
   ].forEach((element) => {
     element.addEventListener("input", handleInputChange);
     element.addEventListener("change", handleInputChange);
@@ -90,12 +118,12 @@ function attachListeners() {
 }
 
 function handleInputChange() {
-  formElements.visibleCountValue.value = formElements.visibleCount.value;
   formElements.visibleCountValue.textContent = formElements.visibleCount.value;
-  formElements.loadBatchSizeValue.value = formElements.loadBatchSize.value;
   formElements.loadBatchSizeValue.textContent = formElements.loadBatchSize.value;
-  formElements.trimThresholdValue.value = formElements.trimThreshold.value;
   formElements.trimThresholdValue.textContent = formElements.trimThreshold.value;
+  formElements.lazyRenderMarginValue.textContent = formElements.lazyRenderMargin.value;
+  formElements.observerThrottleMsValue.textContent = formElements.observerThrottleMs.value;
+  formElements.scrollDebounceMsValue.textContent = formElements.scrollDebounceMs.value;
 
   window.clearTimeout(saveTimer);
   saveTimer = window.setTimeout(async () => {
@@ -105,7 +133,12 @@ function handleInputChange() {
       loadBatchSize: formElements.loadBatchSize.value,
       trimThreshold: formElements.trimThreshold.value,
       reduceEffects: formElements.reduceEffects.checked,
-      showStatusBadge: formElements.showStatusBadge.checked
+      showStatusBadge: formElements.showStatusBadge.checked,
+      cleanupOnSwitch: formElements.cleanupOnSwitch.checked,
+      lazyRenderMedia: formElements.lazyRenderMedia.checked,
+      lazyRenderMargin: formElements.lazyRenderMargin.value,
+      observerThrottleMs: formElements.observerThrottleMs.value,
+      scrollDebounceMs: formElements.scrollDebounceMs.value
     });
 
     await chrome.storage.local.set({ [STORAGE_KEY]: nextSettings });

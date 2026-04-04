@@ -8,15 +8,21 @@
   const STORAGE_KEY = "cgpb-settings";
   const OVERLAY_ID = "cgpb-overlay";
   const MAX_CONVERSATION_CACHE = 5;
-  const REFRESH_DELAY_MS = 80;
   const NAVIGATION_POLL_MS = 600;
+  const LAZY_PLACEHOLDER_CLASS = "cgpb-lazy-placeholder";
+  const LAZY_HIDDEN_ATTR = "data-cgpb-lazy-hidden";
   const DEFAULT_SETTINGS = {
     enabled: true,
     visibleCount: 12,
     loadBatchSize: 10,
     trimThreshold: 18,
     showStatusBadge: true,
-    reduceEffects: true
+    reduceEffects: true,
+    cleanupOnSwitch: false,
+    lazyRenderMedia: true,
+    lazyRenderMargin: 300,
+    observerThrottleMs: 80,
+    scrollDebounceMs: 100
   };
   const TURN_SELECTORS = [
     'main [data-message-author-role]',
@@ -27,11 +33,14 @@
   let settings = { ...DEFAULT_SETTINGS };
   let observer = null;
   let refreshTimer = 0;
+  let refreshRafId = 0;
   let activeConversationKey = getConversationKey();
   let overlay = null;
   let overlayLessButton = null;
   let overlayLoadButton = null;
   let overlayRevealAllButton = null;
+  let lazyObserver = null;
+  let pendingMutations = false;
   const conversationStateCache = new Map();
 
   init();
@@ -43,6 +52,7 @@
       ensureOverlay();
       observePage();
       installNavigationTracking();
+      initLazyRendering();
       scheduleRefresh();
     });
 
@@ -52,8 +62,16 @@
           return;
         }
 
+        const prev = settings;
         settings = normalizeSettings(changes[STORAGE_KEY].newValue || {});
         applyDocumentFlags();
+
+        if (prev.lazyRenderMedia !== settings.lazyRenderMedia ||
+            prev.lazyRenderMargin !== settings.lazyRenderMargin) {
+          destroyLazyRendering();
+          initLazyRendering();
+        }
+
         scheduleRefresh();
       });
     }
@@ -75,7 +93,12 @@
       loadBatchSize: clampInteger(raw.loadBatchSize, 1, 40, DEFAULT_SETTINGS.loadBatchSize),
       trimThreshold: clampInteger(raw.trimThreshold, 6, 200, DEFAULT_SETTINGS.trimThreshold),
       showStatusBadge: raw.showStatusBadge !== false,
-      reduceEffects: raw.reduceEffects !== false
+      reduceEffects: raw.reduceEffects !== false,
+      cleanupOnSwitch: raw.cleanupOnSwitch === true,
+      lazyRenderMedia: raw.lazyRenderMedia !== false,
+      lazyRenderMargin: clampInteger(raw.lazyRenderMargin, 0, 1000, DEFAULT_SETTINGS.lazyRenderMargin),
+      observerThrottleMs: clampInteger(raw.observerThrottleMs, 16, 500, DEFAULT_SETTINGS.observerThrottleMs),
+      scrollDebounceMs: clampInteger(raw.scrollDebounceMs, 16, 500, DEFAULT_SETTINGS.scrollDebounceMs)
     };
   }
 
@@ -132,6 +155,10 @@
     root.setAttribute("data-cgpb-reduce-effects", settings.enabled && settings.reduceEffects ? "true" : "false");
   }
 
+  /* ───────────────────────────────────────────────────
+     Navigation tracking + memory cleanup
+     ─────────────────────────────────────────────────── */
+
   function installNavigationTracking() {
     if (window.__cgpbNavigationInstalled) {
       return;
@@ -164,9 +191,21 @@
       return;
     }
 
+    const previousKey = activeConversationKey;
     activeConversationKey = nextKey;
+
+    // Feature 1: Memory cleanup — force full page reload on conversation switch
+    if (settings.cleanupOnSwitch && previousKey !== "/" && nextKey !== previousKey) {
+      window.location.reload();
+      return;
+    }
+
     scheduleRefresh();
   }
+
+  /* ───────────────────────────────────────────────────
+     MutationObserver with rAF-throttled callback
+     ─────────────────────────────────────────────────── */
 
   function observePage() {
     if (observer) {
@@ -174,7 +213,17 @@
     }
 
     observer = new MutationObserver(() => {
-      scheduleRefresh();
+      // Feature 3: rAF-throttle — batch mutations into a single rAF frame
+      // instead of firing scheduleRefresh on every single mutation.
+      if (pendingMutations) {
+        return;
+      }
+
+      pendingMutations = true;
+      window.requestAnimationFrame(() => {
+        pendingMutations = false;
+        scheduleRefresh();
+      });
     });
 
     observer.observe(document.documentElement, {
@@ -185,9 +234,19 @@
     });
   }
 
+  /* ───────────────────────────────────────────────────
+     Debounced refresh with configurable delay
+     ─────────────────────────────────────────────────── */
+
   function scheduleRefresh() {
     window.clearTimeout(refreshTimer);
-    refreshTimer = window.setTimeout(refreshChat, REFRESH_DELAY_MS);
+    window.cancelAnimationFrame(refreshRafId);
+
+    // Feature 3: configurable debounce — the timer waits observerThrottleMs,
+    // then fires refreshChat inside a rAF so layout reads are batched.
+    refreshTimer = window.setTimeout(() => {
+      refreshRafId = window.requestAnimationFrame(refreshChat);
+    }, settings.observerThrottleMs);
   }
 
   function refreshChat() {
@@ -221,6 +280,11 @@
       restoreScrollSnapshot(scrollContainer, scrollSnapshot);
     }
 
+    // Feature 2: scan visible turns for new heavy elements to lazy-observe
+    if (settings.enabled && settings.lazyRenderMedia && lazyObserver) {
+      scanForLazyTargets(turns);
+    }
+
     updateOverlay({
       totalCount,
       targetVisibleCount,
@@ -229,6 +293,10 @@
       shouldTrim
     });
   }
+
+  /* ───────────────────────────────────────────────────
+     Turn detection helpers
+     ─────────────────────────────────────────────────── */
 
   function getTurnContainers() {
     const seen = new Set();
@@ -307,6 +375,123 @@
     return Boolean(turn.querySelector("img, video, canvas, svg, pre, table, code"));
   }
 
+  /* ───────────────────────────────────────────────────
+     Feature 2: Lazy rendering of code blocks & images
+     ─────────────────────────────────────────────────── */
+
+  function initLazyRendering() {
+    if (!settings.enabled || !settings.lazyRenderMedia) {
+      return;
+    }
+
+    if (lazyObserver) {
+      return;
+    }
+
+    lazyObserver = new IntersectionObserver(handleLazyIntersections, {
+      rootMargin: `${settings.lazyRenderMargin}px 0px`,
+      threshold: 0
+    });
+  }
+
+  function destroyLazyRendering() {
+    if (!lazyObserver) {
+      return;
+    }
+
+    // Restore all currently-hidden elements before tearing down
+    document.querySelectorAll(`[${LAZY_HIDDEN_ATTR}]`).forEach((element) => {
+      showLazyElement(element);
+    });
+
+    document.querySelectorAll(`.${LAZY_PLACEHOLDER_CLASS}`).forEach((ph) => ph.remove());
+
+    lazyObserver.disconnect();
+    lazyObserver = null;
+  }
+
+  function scanForLazyTargets(turns) {
+    turns.forEach((turn) => {
+      if (turn.dataset.cgpbHidden === "true") {
+        return;
+      }
+
+      // Target heavy elements: code blocks and images/videos
+      turn.querySelectorAll("pre, img, video").forEach((el) => {
+        if (!(el instanceof HTMLElement)) {
+          return;
+        }
+
+        // Skip if already managed or if inside overlay
+        if (el.hasAttribute(LAZY_HIDDEN_ATTR) || el.dataset.cgpbLazyObserved) {
+          return;
+        }
+
+        // Skip small images (icons, avatars)
+        if (el.tagName === "IMG" && el.offsetHeight < 40 && el.offsetWidth < 40) {
+          return;
+        }
+
+        el.dataset.cgpbLazyObserved = "true";
+        lazyObserver.observe(el);
+      });
+    });
+  }
+
+  function handleLazyIntersections(entries) {
+    entries.forEach((entry) => {
+      const el = entry.target;
+
+      if (entry.isIntersecting) {
+        // Element entering viewport+margin — restore it
+        if (el.hasAttribute(LAZY_HIDDEN_ATTR)) {
+          showLazyElement(el);
+        }
+      } else {
+        // Element leaving viewport+margin — replace with placeholder
+        if (!el.hasAttribute(LAZY_HIDDEN_ATTR) && el.offsetHeight > 0) {
+          hideLazyElement(el);
+        }
+      }
+    });
+  }
+
+  function hideLazyElement(el) {
+    const rect = el.getBoundingClientRect();
+    const height = rect.height || el.offsetHeight || 80;
+
+    // Create lightweight placeholder
+    const placeholder = document.createElement("div");
+    placeholder.className = LAZY_PLACEHOLDER_CLASS;
+    placeholder.style.height = `${height}px`;
+    placeholder.style.minHeight = `${height}px`;
+    placeholder.dataset.cgpbPlaceholderFor = el.dataset.cgpbLazyObserved || "1";
+
+    // Insert placeholder before element, then hide element
+    el.parentNode.insertBefore(placeholder, el);
+    el.setAttribute(LAZY_HIDDEN_ATTR, "true");
+    el.style.display = "none";
+
+    // Observe the placeholder so we know when to restore
+    lazyObserver.observe(placeholder);
+  }
+
+  function showLazyElement(el) {
+    el.removeAttribute(LAZY_HIDDEN_ATTR);
+    el.style.display = "";
+
+    // Remove the placeholder that sits before this element
+    const prev = el.previousElementSibling;
+    if (prev && prev.classList.contains(LAZY_PLACEHOLDER_CLASS)) {
+      lazyObserver.unobserve(prev);
+      prev.remove();
+    }
+  }
+
+  /* ───────────────────────────────────────────────────
+     Scroll & layout helpers
+     ─────────────────────────────────────────────────── */
+
   function getScrollContainer(turns) {
     const anchor = turns[0] || document.querySelector("main");
     if (anchor instanceof HTMLElement) {
@@ -357,6 +542,10 @@
 
     container.scrollTop = isNearBottom ? container.scrollHeight : nextTop;
   }
+
+  /* ───────────────────────────────────────────────────
+     Overlay panel
+     ─────────────────────────────────────────────────── */
 
   function ensureOverlay() {
     if (overlay?.isConnected) {
