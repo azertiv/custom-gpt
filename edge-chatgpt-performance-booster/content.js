@@ -833,6 +833,13 @@
     });
   }
 
+  // Map our button labels → ChatGPT model-switcher data-testid values.
+  const REASONING_TESTID = {
+    Instant: "model-switcher-gpt-5-3",
+    Thinking: "model-switcher-gpt-5-4-thinking",
+    Pro: "model-switcher-gpt-5-4-pro"
+  };
+
   async function setReasoningMode(label, button) {
     if (!(button instanceof HTMLButtonElement)) {
       return;
@@ -841,95 +848,42 @@
     button.disabled = true;
 
     try {
-      const currentMode = getCurrentReasoningMode();
-      if (currentMode === label) {
+      const testId = REASONING_TESTID[label];
+      if (!testId) {
         return;
       }
 
-      if (label === "Instant") {
-        const removeButton = getReasoningPillRemoveButton();
-        if (removeButton instanceof HTMLButtonElement) {
-          removeButton.click();
-          await wait(300);
-          scheduleRefresh();
-        }
-        // If no remove button exists we're already in Instant mode.
+      // 1. Open the model-switcher dropdown.
+      const switcher = document.querySelector('[data-testid="model-switcher-dropdown-button"]');
+      if (!(switcher instanceof HTMLElement)) {
         return;
       }
 
-      // For Thinking / Pro: ensure a thinking pill is present first.
-      if (!(getReasoningPillTrigger() instanceof HTMLButtonElement)) {
-        const enabled = await tryEnableThinking();
-        if (!enabled) {
-          return;
-        }
-        await wait(300);
-      }
+      simulateUserClick(switcher);
 
-      const menuOpened = await openReasoningMenu();
-      if (!menuOpened) {
-        return;
-      }
-
-      // Build a list of candidate label strings to try, from most specific
-      // to most generic, so the first match wins.
-      const labelCandidates =
-        label === "Thinking"
-          ? ["Thinking", "Extended thinking", "Think", "Auto", "Default"]
-          : ["Pro", "High", "Max", "Extended thinking +"];
-
-      let option = null;
-      for (const candidate of labelCandidates) {
-        option = findReasoningOption(candidate);
-        if (option instanceof HTMLElement) {
+      // 2. Wait for the menu item to appear in the DOM.
+      let menuItem = null;
+      for (let i = 0; i < 12; i++) {
+        await wait(80);
+        menuItem = document.querySelector(`[data-testid="${testId}"]`);
+        if (menuItem instanceof HTMLElement) {
           break;
         }
       }
 
-      // If still not found, wait for the portal to fully render and retry.
-      if (!(option instanceof HTMLElement)) {
-        await wait(300);
-        for (const candidate of labelCandidates) {
-          option = findReasoningOption(candidate);
-          if (option instanceof HTMLElement) {
-            break;
-          }
-        }
+      if (!(menuItem instanceof HTMLElement)) {
+        return;
       }
 
-      if (option instanceof HTMLElement) {
-        simulateUserClick(option);
-        await wait(300);
-        scheduleRefresh();
-      }
+      // 3. Click the target menu item.
+      simulateUserClick(menuItem);
+      await wait(200);
+      scheduleRefresh();
     } finally {
       window.setTimeout(() => {
         button.disabled = false;
-      }, 350);
+      }, 400);
     }
-  }
-
-  function findReasoningOption(label) {
-    const candidates = document.querySelectorAll(
-      '[role="menuitem"], [role="menuitemradio"], [role="option"], [data-radix-popper-content-wrapper] button'
-    );
-
-    for (const candidate of candidates) {
-      if (!(candidate instanceof HTMLElement)) {
-        continue;
-      }
-
-       if (!isElementVisible(candidate)) {
-        continue;
-      }
-
-      const text = (candidate.textContent || "").replace(/\s+/g, " ").trim().toLowerCase();
-      if (text.includes(label.toLowerCase())) {
-        return candidate;
-      }
-    }
-
-    return null;
   }
 
   function getReasoningQuickActionsHost() {
@@ -947,149 +901,20 @@
     return selectorButton?.parentElement || null;
   }
 
-  function getReasoningPillTrigger() {
-    // Prefer the CSS-class selector — most robust across ChatGPT versions.
-    const pillByClass = document.querySelector('[data-testid="composer-footer-actions"] button.__composer-pill');
-    if (pillByClass instanceof HTMLButtonElement && isElementVisible(pillByClass)) {
-      return pillByClass;
-    }
-
-    // Any button with a dropdown menu inside the footer area.
-    const pillByMenu = document.querySelector('[data-testid="composer-footer-actions"] button[aria-haspopup="menu"]');
-    if (pillByMenu instanceof HTMLButtonElement && isElementVisible(pillByMenu)) {
-      return pillByMenu;
-    }
-
-    // Text-based fallback.
-    const candidates = document.querySelectorAll(
-      '[data-testid="composer-footer-actions"] .__composer-pill, [data-testid="composer-footer-actions"] button'
-    );
-
-    for (const candidate of candidates) {
-      if (!(candidate instanceof HTMLButtonElement)) {
-        continue;
-      }
-
-      if (!isElementVisible(candidate)) {
-        continue;
-      }
-
-      const text = (candidate.textContent || "").replace(/\s+/g, " ").trim().toLowerCase();
-      if (text.includes("thinking") || text.includes("pro")) {
-        return candidate;
-      }
-    }
-
-    return null;
-  }
-
-  function getReasoningPillRemoveButton() {
-    const candidates = document.querySelectorAll('[data-testid="composer-footer-actions"] .__composer-pill-remove');
-    for (const candidate of candidates) {
-      if (candidate instanceof HTMLButtonElement && isElementVisible(candidate)) {
-        return candidate;
-      }
-    }
-
-    return null;
-  }
-
   function getCurrentReasoningMode() {
-    const pillTrigger = getReasoningPillTrigger();
-    const label = (pillTrigger?.textContent || "").replace(/\s+/g, " ").trim().toLowerCase();
+    // Detect from the composer-footer pill text.
+    const pill = document.querySelector('[data-testid="composer-footer-actions"] button.__composer-pill');
+    const label = (pill?.textContent || "").replace(/\s+/g, " ").trim().toLowerCase();
 
     if (label.includes("pro")) {
       return "Pro";
     }
 
-    if (label.includes("thinking")) {
+    if (label.includes("thinking") || label.includes("extended")) {
       return "Thinking";
     }
 
     return "Instant";
-  }
-
-  async function openReasoningMenu() {
-    const trigger = getReasoningPillTrigger();
-    if (!(trigger instanceof HTMLButtonElement)) {
-      return false;
-    }
-
-    if (trigger.getAttribute("aria-expanded") === "true") {
-      return true;
-    }
-
-    simulateUserClick(trigger);
-
-    // Poll for aria-expanded to become "true" — Radix UI portals can take
-    // several animation frames to mount the menu content.
-    for (let i = 0; i < 8; i++) {
-      await wait(80);
-      if (trigger.getAttribute("aria-expanded") === "true") {
-        return true;
-      }
-    }
-
-    // Return true anyway: the menu may have opened even if the attribute
-    // hasn't updated yet (e.g. uncontrolled component).
-    return true;
-  }
-
-  // Attempt to enable Extended Thinking when no pill is currently shown
-  // (i.e. the user is in "Instant" / no-thinking mode).
-  async function tryEnableThinking() {
-    const footerArea = document.querySelector('[data-testid="composer-footer-actions"]');
-    if (footerArea instanceof HTMLElement) {
-      for (const btn of footerArea.querySelectorAll("button")) {
-        if (!(btn instanceof HTMLButtonElement)) {
-          continue;
-        }
-        const label = (btn.getAttribute("aria-label") || "").toLowerCase();
-        const text = (btn.textContent || "").replace(/\s+/g, " ").trim().toLowerCase();
-        // Don't accidentally click the remove button of an existing pill.
-        if (label.includes("remove")) {
-          continue;
-        }
-        if (label.includes("think") || text.includes("think")) {
-          btn.click();
-          return true;
-        }
-      }
-    }
-
-    // Broader search: any thinking-related button inside the composer form.
-    const composerForm = document.querySelector("form");
-    if (composerForm instanceof HTMLElement) {
-      const thinkBtns = Array.from(
-        composerForm.querySelectorAll('button[aria-label*="think" i], button[aria-label*="reason" i]')
-      );
-      for (const btn of thinkBtns) {
-        if (btn.closest("#cgpb-overlay") || btn.closest(".cgpb-inline-slot")) {
-          continue;
-        }
-        const label = (btn.getAttribute("aria-label") || "").toLowerCase();
-        if (label.includes("remove")) {
-          continue;
-        }
-        btn.click();
-        return true;
-      }
-    }
-
-    return false;
-  }
-
-  function isElementVisible(element) {
-    if (!(element instanceof HTMLElement)) {
-      return false;
-    }
-
-    if (element.getClientRects().length === 0) {
-      return false;
-    }
-
-    const style = window.getComputedStyle(element);
-    return style.visibility !== "hidden" && style.display !== "none";
   }
 
   function wait(duration) {
