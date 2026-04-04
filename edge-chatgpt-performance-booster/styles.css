@@ -53,10 +53,10 @@ html[data-cgpb-extension="true"]:not(.dark) {
   --token-main-surface-tertiary: #E8E4DB !important;
 
   /* ChatGPT background tokens */
-  --bg-primary: #FFFFFF !important;
+  --bg-primary: #F4F1EB !important;
   --bg-secondary: #F7F5F0 !important;
   --bg-elevated-secondary: #EDEAE3 !important;
-  --token-bg-primary: #FFFFFF !important;
+  --token-bg-primary: #F4F1EB !important;
   --token-bg-secondary: #F7F5F0 !important;
   --token-bg-elevated-secondary: #EDEAE3 !important;
 
@@ -199,8 +199,8 @@ html[data-cgpb-extension="true"].dark #page-header {
 
 /* Composer surface — override hardcoded dark:bg-[#303030] */
 html[data-cgpb-extension="true"]:not(.dark) [data-composer-surface="true"] {
-  background-color: #FFFFFF !important;
-  box-shadow: 0 2px 12px rgba(45, 42, 38, 0.08) !important;
+  background-color: #F4F1EB !important;
+  box-shadow: 0 2px 12px rgba(45, 42, 38, 0.06) !important;
 }
 html[data-cgpb-extension="true"].dark [data-composer-surface="true"] {
   background-color: #2A2824 !important;
@@ -226,6 +226,47 @@ html[data-cgpb-extension="true"].dark [data-scroll-root] {
 /* Avatar placeholder */
 html[data-cgpb-extension="true"] .bg-gray-500\/30 {
   background-color: rgba(139, 132, 120, 0.3) !important;
+}
+
+/* Composer — target Tailwind class directly (bg-token-bg-primary) */
+html[data-cgpb-extension="true"]:not(.dark) .bg-token-bg-primary {
+  background-color: #F4F1EB !important;
+}
+html[data-cgpb-extension="true"].dark .bg-token-bg-primary {
+  background-color: #2A2824 !important;
+}
+
+/* Composer shadow warm */
+html[data-cgpb-extension="true"]:not(.dark) .shadow-short-composer {
+  box-shadow: 0 2px 12px rgba(45, 42, 38, 0.06) !important;
+}
+html[data-cgpb-extension="true"].dark .shadow-short-composer {
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Thread bottom container + content-fade gradient bar */
+html[data-cgpb-extension="true"]:not(.dark) #thread-bottom-container {
+  background: #F7F5F0 !important;
+}
+html[data-cgpb-extension="true"].dark #thread-bottom-container {
+  background: #1D1C18 !important;
+}
+
+html[data-cgpb-extension="true"]:not(.dark) .content-fade::before,
+html[data-cgpb-extension="true"]:not(.dark) .content-fade::after {
+  background: linear-gradient(to bottom, rgba(247, 245, 240, 0), #F7F5F0) !important;
+}
+html[data-cgpb-extension="true"].dark .content-fade::before,
+html[data-cgpb-extension="true"].dark .content-fade::after {
+  background: linear-gradient(to bottom, rgba(29, 28, 24, 0), #1D1C18) !important;
+}
+
+/* Disclaimer bar below composer */
+html[data-cgpb-extension="true"]:not(.dark) #thread-bottom {
+  background: #F7F5F0 !important;
+}
+html[data-cgpb-extension="true"].dark #thread-bottom {
+  background: #1D1C18 !important;
 }
 
 /* ═══════════════════════════════════════════════════════
