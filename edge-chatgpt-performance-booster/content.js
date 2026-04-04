@@ -464,10 +464,11 @@
       return existing;
     }
 
-    const host = getLikelyActionBar(turn);
     const slot = document.createElement("div");
     slot.className = "cgpb-inline-slot";
 
+    // 1. Try inserting into the native ChatGPT action bar.
+    const host = getLikelyActionBar(turn);
     if (host instanceof HTMLElement) {
       const moreActionsButton = Array.from(host.querySelectorAll("button")).find((button) => {
         return /more actions/i.test(button.getAttribute("aria-label") || "");
@@ -481,7 +482,22 @@
       return slot;
     }
 
-    return null;
+    // 2. Fallback — create a standalone row after the content element so
+    //    buttons always appear even when the native action bar is hidden or
+    //    uses an unexpected DOM structure.
+    const content = getTurnContentElement(turn);
+    if (content instanceof HTMLElement && content !== turn) {
+      const wrapper = document.createElement("div");
+      wrapper.className = "cgpb-inline-slot cgpb-inline-slot-fallback";
+      wrapper.appendChild(slot);
+      // Insert after the content element (before the next sibling).
+      content.parentElement.insertBefore(wrapper, content.nextSibling);
+      return slot;
+    }
+
+    // 3. Last resort — append to the turn itself.
+    turn.appendChild(slot);
+    return slot;
   }
 
   function getLikelyActionBar(turn) {
@@ -882,7 +898,7 @@
       }
 
       if (option instanceof HTMLElement) {
-        option.click();
+        simulateUserClick(option);
         await wait(300);
         scheduleRefresh();
       }
@@ -1003,7 +1019,7 @@
       return true;
     }
 
-    trigger.click();
+    simulateUserClick(trigger);
 
     // Poll for aria-expanded to become "true" — Radix UI portals can take
     // several animation frames to mount the menu content.
@@ -1080,6 +1096,23 @@
     return new Promise((resolve) => {
       window.setTimeout(resolve, duration);
     });
+  }
+
+  // Dispatch the full pointer → mouse → click sequence that Radix UI menus
+  // require.  A plain element.click() only fires a MouseEvent "click" — Radix
+  // triggers listen on "pointerdown" and ignore bare clicks.
+  function simulateUserClick(element) {
+    const rect = element.getBoundingClientRect();
+    const opts = {
+      bubbles: true,
+      cancelable: true,
+      view: window,
+      clientX: rect.left + rect.width / 2,
+      clientY: rect.top + rect.height / 2
+    };
+    element.dispatchEvent(new PointerEvent("pointerdown", opts));
+    element.dispatchEvent(new PointerEvent("pointerup", opts));
+    element.dispatchEvent(new MouseEvent("click", opts));
   }
 
   function getCurrentConversationTitle() {
