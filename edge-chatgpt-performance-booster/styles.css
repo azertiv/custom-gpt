@@ -58,6 +58,10 @@ html[data-cgpb-enabled="true"] .cgpb-inline-slot {
   justify-content: center;
   gap: 6px;
   margin-left: 6px;
+  flex-shrink: 0;
+  pointer-events: auto;
+  position: relative;
+  z-index: 1;
 }
 
 html[data-cgpb-enabled="true"] .cgpb-inline-slot-fallback {
@@ -69,16 +73,18 @@ html[data-cgpb-enabled="true"] .cgpb-inline-action {
   appearance: none;
   border: 1px solid var(--cgpb-border);
   border-radius: 999px;
+  min-height: 28px;
   padding: 5px 10px;
-  background: transparent;
-  color: var(--cgpb-text-soft);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--cgpb-text);
   cursor: pointer;
   font: 500 11px/1 "Segoe UI", system-ui, sans-serif;
+  white-space: nowrap;
 }
 
 html[data-cgpb-enabled="true"] .cgpb-inline-action:hover {
-  background: var(--cgpb-panel-soft);
-  color: var(--cgpb-text);
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--cgpb-accent-strong);
 }
 
 html[data-cgpb-enabled="true"] .cgpb-inline-action[disabled] {
@@ -93,6 +99,7 @@ html[data-cgpb-enabled="true"] .cgpb-inline-action[data-cgpb-loading="true"] {
 html[data-cgpb-enabled="true"] .cgpb-reasoning-bar {
   display: inline-flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 6px;
   margin-left: 8px;
 }
@@ -112,6 +119,12 @@ html[data-cgpb-enabled="true"] .cgpb-reasoning-button {
 html[data-cgpb-enabled="true"] .cgpb-reasoning-button:hover {
   background: var(--cgpb-panel-soft);
   color: var(--cgpb-text);
+}
+
+html[data-cgpb-enabled="true"] .cgpb-reasoning-button[data-active="true"] {
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--cgpb-accent-strong);
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
 html[data-cgpb-enabled="true"] .cgpb-reasoning-button[disabled] {

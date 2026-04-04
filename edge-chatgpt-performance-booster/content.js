@@ -306,6 +306,11 @@
   }
 
   function normalizeTurnNode(node) {
+    const articleAncestor = node.closest('article[data-testid^="conversation-turn-"], article');
+    if (articleAncestor instanceof HTMLElement) {
+      return articleAncestor;
+    }
+
     if (node.matches('[data-message-author-role]')) {
       return node;
     }
@@ -319,8 +324,7 @@
       return node;
     }
 
-    const articleAncestor = node.closest("article");
-    return articleAncestor instanceof HTMLElement ? articleAncestor : null;
+    return null;
   }
 
   function hasRenderableContent(turn) {
@@ -395,15 +399,16 @@
 
       if (isLong) {
         const isCollapsed = conversationState.collapsedReplies[key] === true;
-        const button = ensureInlineActionButton(slot, "cgpb-collapse-action", "Collapse");
+        const button = ensureInlineActionButton(slot, "cgpb-collapse-action", "Hide");
 
         turn.classList.add("cgpb-collapsible-turn");
         turn.dataset.cgpbCollapseKey = key;
         turn.dataset.cgpbCollapsed = isCollapsed ? "true" : "false";
         content.classList.add("cgpb-long-reply-target");
         content.dataset.cgpbCollapseKey = key;
-        button.textContent = isCollapsed ? "Expand" : "Collapse";
+        button.textContent = isCollapsed ? "Expand" : "Hide";
         button.setAttribute("aria-expanded", isCollapsed ? "false" : "true");
+        button.title = isCollapsed ? "Reafficher la reponse complete" : "Replier cette reponse";
         button.onclick = () => {
           const state = getConversationState();
           state.collapsedReplies[key] = !(state.collapsedReplies[key] === true);
@@ -464,7 +469,15 @@
     slot.className = "cgpb-inline-slot";
 
     if (host instanceof HTMLElement) {
-      host.appendChild(slot);
+      const moreActionsButton = Array.from(host.querySelectorAll("button")).find((button) => {
+        return /more actions/i.test(button.getAttribute("aria-label") || "");
+      });
+
+      if (moreActionsButton?.parentElement === host) {
+        host.insertBefore(slot, moreActionsButton);
+      } else {
+        host.appendChild(slot);
+      }
       return slot;
     }
 
@@ -724,12 +737,7 @@
   }
 
   function updateReasoningQuickActions() {
-    const selectorButton = document.querySelector('[data-testid="model-switcher-dropdown-button"]');
-    if (!(selectorButton instanceof HTMLButtonElement)) {
-      return;
-    }
-
-    const host = selectorButton.parentElement;
+    const host = getReasoningQuickActionsHost();
     if (!(host instanceof HTMLElement)) {
       return;
     }
@@ -752,6 +760,18 @@
 
       host.appendChild(bar);
     }
+
+    const currentMode = getCurrentReasoningMode();
+    bar.querySelectorAll(".cgpb-reasoning-button").forEach((node) => {
+      if (!(node instanceof HTMLButtonElement)) {
+        return;
+      }
+
+      const isActive = node.textContent === currentMode;
+      node.dataset.active = isActive ? "true" : "false";
+      node.setAttribute("aria-pressed", isActive ? "true" : "false");
+      node.title = isActive ? `Mode actuel : ${currentMode}` : `Passer en mode ${node.textContent}`;
+    });
   }
 
   async function setReasoningMode(label, button) {
@@ -762,24 +782,43 @@
     button.disabled = true;
 
     try {
-      const selectorButton = document.querySelector('[data-testid="model-switcher-dropdown-button"]');
-      if (!(selectorButton instanceof HTMLButtonElement)) {
+      const currentMode = getCurrentReasoningMode();
+      if (currentMode === label) {
         return;
       }
 
-      if (selectorButton.getAttribute("aria-expanded") !== "true") {
-        selectorButton.click();
-        await wait(90);
+      if (label === "Instant") {
+        const removeButton = getReasoningPillRemoveButton();
+        if (removeButton instanceof HTMLButtonElement) {
+          removeButton.click();
+          await wait(120);
+          scheduleRefresh();
+          return;
+        }
+      }
+
+      const menuOpened = await openReasoningMenu();
+      if (!menuOpened) {
+        return;
       }
 
       let option = findReasoningOption(label);
+      if (!(option instanceof HTMLElement) && label === "Thinking") {
+        option = findReasoningOption("Extended thinking");
+      }
+
       if (!(option instanceof HTMLElement)) {
-        await wait(160);
+        await wait(180);
         option = findReasoningOption(label);
+        if (!(option instanceof HTMLElement) && label === "Thinking") {
+          option = findReasoningOption("Extended thinking");
+        }
       }
 
       if (option instanceof HTMLElement) {
         option.click();
+        await wait(120);
+        scheduleRefresh();
       }
     } finally {
       window.setTimeout(() => {
@@ -798,6 +837,10 @@
         continue;
       }
 
+       if (!isElementVisible(candidate)) {
+        continue;
+      }
+
       const text = (candidate.textContent || "").replace(/\s+/g, " ").trim().toLowerCase();
       if (text.includes(label.toLowerCase())) {
         return candidate;
@@ -805,6 +848,98 @@
     }
 
     return null;
+  }
+
+  function getReasoningQuickActionsHost() {
+    const footerActions = document.querySelector('[data-testid="composer-footer-actions"]');
+    if (footerActions instanceof HTMLElement) {
+      const row = footerActions.firstElementChild;
+      if (row instanceof HTMLElement) {
+        return row;
+      }
+
+      return footerActions;
+    }
+
+    const selectorButton = document.querySelector('[data-testid="model-switcher-dropdown-button"]');
+    return selectorButton?.parentElement || null;
+  }
+
+  function getReasoningPillTrigger() {
+    const candidates = document.querySelectorAll(
+      '[data-testid="composer-footer-actions"] .__composer-pill, [data-testid="composer-footer-actions"] button'
+    );
+
+    for (const candidate of candidates) {
+      if (!(candidate instanceof HTMLButtonElement)) {
+        continue;
+      }
+
+      if (!isElementVisible(candidate)) {
+        continue;
+      }
+
+      const text = (candidate.textContent || "").replace(/\s+/g, " ").trim().toLowerCase();
+      if (text.includes("thinking") || text.includes("pro")) {
+        return candidate;
+      }
+    }
+
+    return null;
+  }
+
+  function getReasoningPillRemoveButton() {
+    const candidates = document.querySelectorAll('[data-testid="composer-footer-actions"] .__composer-pill-remove');
+    for (const candidate of candidates) {
+      if (candidate instanceof HTMLButtonElement && isElementVisible(candidate)) {
+        return candidate;
+      }
+    }
+
+    return null;
+  }
+
+  function getCurrentReasoningMode() {
+    const pillTrigger = getReasoningPillTrigger();
+    const label = (pillTrigger?.textContent || "").replace(/\s+/g, " ").trim().toLowerCase();
+
+    if (label.includes("pro")) {
+      return "Pro";
+    }
+
+    if (label.includes("thinking")) {
+      return "Thinking";
+    }
+
+    return "Instant";
+  }
+
+  async function openReasoningMenu() {
+    const trigger = getReasoningPillTrigger();
+    if (!(trigger instanceof HTMLButtonElement)) {
+      return false;
+    }
+
+    if (trigger.getAttribute("aria-expanded") === "true") {
+      return true;
+    }
+
+    trigger.click();
+    await wait(120);
+    return true;
+  }
+
+  function isElementVisible(element) {
+    if (!(element instanceof HTMLElement)) {
+      return false;
+    }
+
+    if (element.getClientRects().length === 0) {
+      return false;
+    }
+
+    const style = window.getComputedStyle(element);
+    return style.visibility !== "hidden" && style.display !== "none";
   }
 
   function wait(duration) {
