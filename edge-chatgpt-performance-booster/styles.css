@@ -90,6 +90,35 @@ html[data-cgpb-enabled="true"] .cgpb-inline-action[data-cgpb-loading="true"] {
   animation: cgpb-pulse 900ms ease-in-out infinite;
 }
 
+html[data-cgpb-enabled="true"] .cgpb-reasoning-bar {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: 8px;
+}
+
+html[data-cgpb-enabled="true"] .cgpb-reasoning-button {
+  appearance: none;
+  border: 1px solid var(--cgpb-border);
+  border-radius: 999px;
+  padding: 6px 10px;
+  background: transparent;
+  color: var(--cgpb-text-soft);
+  cursor: pointer;
+  font: 500 11px/1 "Segoe UI", system-ui, sans-serif;
+  white-space: nowrap;
+}
+
+html[data-cgpb-enabled="true"] .cgpb-reasoning-button:hover {
+  background: var(--cgpb-panel-soft);
+  color: var(--cgpb-text);
+}
+
+html[data-cgpb-enabled="true"] .cgpb-reasoning-button[disabled] {
+  opacity: 0.56;
+  cursor: progress;
+}
+
 #cgpb-overlay {
   position: fixed;
   right: 18px;

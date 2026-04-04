@@ -17,6 +17,7 @@
   const PDF_MARGIN = 48;
   const PDF_FONT_SIZE = 11;
   const PDF_LINE_HEIGHT = 15;
+  const REASONING_OPTIONS = ["Instant", "Thinking", "Pro"];
   const DEFAULT_SETTINGS = {
     enabled: true,
     visibleCount: 12,
@@ -38,6 +39,7 @@
   let navigationTimer = 0;
   let activeConversationKey = getConversationKey();
   let overlay = null;
+  let overlayLessButton = null;
   let overlayLoadButton = null;
   let overlayRevealAllButton = null;
   const conversationStateCache = new Map();
@@ -246,11 +248,13 @@
     }
 
     updateReplyActions(turns, conversationState);
+    updateReasoningQuickActions();
 
     updateOverlay({
       totalCount,
       targetVisibleCount,
       hiddenCount,
+      manualBoost: conversationState.manualBoost,
       shouldTrim
     });
   }
@@ -468,6 +472,11 @@
   }
 
   function getLikelyActionBar(turn) {
+    const exactMatch = turn.querySelector('[aria-label="Response actions"][role="group"]');
+    if (exactMatch instanceof HTMLElement) {
+      return exactMatch;
+    }
+
     const buttons = Array.from(turn.querySelectorAll("button")).filter((button) => {
       if (!(button instanceof HTMLButtonElement)) {
         return false;
@@ -642,14 +651,22 @@
     overlay.innerHTML = [
       '<div class="cgpb-panel">',
       '  <div class="cgpb-actions">',
-      '    <button type="button" id="cgpb-load-more">More</button>',
+      '    <button type="button" id="cgpb-less">-</button>',
+      '    <button type="button" id="cgpb-load-more">+</button>',
       '    <button type="button" id="cgpb-reveal-all">All</button>',
       "  </div>",
       "</div>"
     ].join("");
 
+    overlayLessButton = overlay.querySelector("#cgpb-less");
     overlayLoadButton = overlay.querySelector("#cgpb-load-more");
     overlayRevealAllButton = overlay.querySelector("#cgpb-reveal-all");
+
+    overlayLessButton?.addEventListener("click", () => {
+      const state = getConversationState();
+      state.manualBoost = Math.max(0, state.manualBoost - settings.loadBatchSize);
+      scheduleRefresh();
+    });
 
     overlayLoadButton?.addEventListener("click", () => {
       const state = getConversationState();
@@ -667,7 +684,7 @@
     document.documentElement.appendChild(overlay);
   }
 
-  function updateOverlay({ totalCount, targetVisibleCount, hiddenCount, shouldTrim }) {
+  function updateOverlay({ totalCount, targetVisibleCount, hiddenCount, manualBoost, shouldTrim }) {
     if (!overlay) {
       return;
     }
@@ -680,12 +697,19 @@
     }
 
     toggleActionButtons({
+      less: manualBoost > 0,
       loadMore: hiddenCount > 0,
       revealAll: shouldTrim && targetVisibleCount < totalCount
     });
   }
 
-  function toggleActionButtons({ loadMore, revealAll }) {
+  function toggleActionButtons({ less, loadMore, revealAll }) {
+    if (overlayLessButton) {
+      overlayLessButton.disabled = !less;
+      overlayLessButton.setAttribute("aria-disabled", less ? "false" : "true");
+      overlayLessButton.title = less ? `Masquer ${settings.loadBatchSize} messages visibles` : "Impossible de reduire davantage";
+    }
+
     if (overlayLoadButton) {
       overlayLoadButton.disabled = !loadMore;
       overlayLoadButton.setAttribute("aria-disabled", loadMore ? "false" : "true");
@@ -697,6 +721,96 @@
       overlayRevealAllButton.setAttribute("aria-disabled", revealAll ? "false" : "true");
       overlayRevealAllButton.title = revealAll ? "Afficher toute la conversation" : "Toute la conversation est deja visible";
     }
+  }
+
+  function updateReasoningQuickActions() {
+    const selectorButton = document.querySelector('[data-testid="model-switcher-dropdown-button"]');
+    if (!(selectorButton instanceof HTMLButtonElement)) {
+      return;
+    }
+
+    const host = selectorButton.parentElement;
+    if (!(host instanceof HTMLElement)) {
+      return;
+    }
+
+    let bar = host.querySelector(".cgpb-reasoning-bar");
+    if (!(bar instanceof HTMLElement)) {
+      bar = document.createElement("div");
+      bar.className = "cgpb-reasoning-bar";
+
+      REASONING_OPTIONS.forEach((label) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "cgpb-reasoning-button";
+        button.textContent = label;
+        button.addEventListener("click", () => {
+          setReasoningMode(label, button);
+        });
+        bar.appendChild(button);
+      });
+
+      host.appendChild(bar);
+    }
+  }
+
+  async function setReasoningMode(label, button) {
+    if (!(button instanceof HTMLButtonElement)) {
+      return;
+    }
+
+    button.disabled = true;
+
+    try {
+      const selectorButton = document.querySelector('[data-testid="model-switcher-dropdown-button"]');
+      if (!(selectorButton instanceof HTMLButtonElement)) {
+        return;
+      }
+
+      if (selectorButton.getAttribute("aria-expanded") !== "true") {
+        selectorButton.click();
+        await wait(90);
+      }
+
+      let option = findReasoningOption(label);
+      if (!(option instanceof HTMLElement)) {
+        await wait(160);
+        option = findReasoningOption(label);
+      }
+
+      if (option instanceof HTMLElement) {
+        option.click();
+      }
+    } finally {
+      window.setTimeout(() => {
+        button.disabled = false;
+      }, 180);
+    }
+  }
+
+  function findReasoningOption(label) {
+    const candidates = document.querySelectorAll(
+      '[role="menuitem"], [role="menuitemradio"], [role="option"], [data-radix-popper-content-wrapper] button'
+    );
+
+    for (const candidate of candidates) {
+      if (!(candidate instanceof HTMLElement)) {
+        continue;
+      }
+
+      const text = (candidate.textContent || "").replace(/\s+/g, " ").trim().toLowerCase();
+      if (text.includes(label.toLowerCase())) {
+        return candidate;
+      }
+    }
+
+    return null;
+  }
+
+  function wait(duration) {
+    return new Promise((resolve) => {
+      window.setTimeout(resolve, duration);
+    });
   }
 
   function getCurrentConversationTitle() {
