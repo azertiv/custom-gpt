@@ -1167,15 +1167,15 @@
     const drawPageHeader = () => {
       const top = PDF_PAGE_HEIGHT - PDF_MARGIN + 6;
 
-      currentCommands.push("0.10 0.65 0.46 rg");
+      currentCommands.push("0.76 0.40 0.16 rg");
       currentCommands.push(createHexBadgePath(PDF_MARGIN, top - 10, 10));
       currentCommands.push("/F2 18 Tf");
-      currentCommands.push("0.08 0.11 0.16 rg");
+      currentCommands.push("0.18 0.16 0.15 rg");
       currentCommands.push(`BT 0 0 0 rg 70 ${top - 14} Td (${escapePdfText("ChatGPT")}) Tj ET`);
       currentCommands.push("/F1 10 Tf");
-      currentCommands.push("0.42 0.48 0.55 rg");
+      currentCommands.push("0.47 0.45 0.42 rg");
       currentCommands.push(`BT 0 0 0 rg 70 ${top - 28} Td (${escapePdfText(conversation.title || "Discussion")}) Tj ET`);
-      currentCommands.push("0.85 0.88 0.92 RG");
+      currentCommands.push("0.87 0.85 0.81 RG");
       currentCommands.push(`${PDF_MARGIN} ${top - 38} m ${PDF_PAGE_WIDTH - PDF_MARGIN} ${top - 38} l S`);
 
       currentY = top - 54;
@@ -1183,7 +1183,7 @@
       if (isFirstPage) {
         const meta = `Export ${new Date().toLocaleDateString("fr-FR")} - ${conversation.messages.length} messages`;
         currentCommands.push("/F1 9 Tf");
-        currentCommands.push("0.42 0.48 0.55 rg");
+        currentCommands.push("0.47 0.45 0.42 rg");
         currentCommands.push(`BT 0 0 0 rg ${PDF_MARGIN} ${currentY} Td (${escapePdfText(meta)}) Tj ET`);
         currentY -= 24;
       }
@@ -1203,22 +1203,22 @@
 
       currentCommands.push("/F2 10 Tf");
       if (message.role === "assistant") {
-        currentCommands.push("0.10 0.65 0.46 rg");
+        currentCommands.push("0.76 0.40 0.16 rg");
       } else {
-        currentCommands.push("0.18 0.22 0.30 rg");
+        currentCommands.push("0.18 0.16 0.15 rg");
       }
       currentCommands.push(`BT 0 0 0 rg ${PDF_MARGIN} ${currentY} Td (${escapePdfText(label)}) Tj ET`);
       currentY -= 16;
 
       currentCommands.push("/F1 11 Tf");
-      currentCommands.push("0.12 0.12 0.12 rg");
+      currentCommands.push("0.18 0.16 0.15 rg");
       paragraphs.forEach((line) => {
         ensureSpace(PDF_LINE_HEIGHT + 10);
         currentCommands.push(`BT 0 0 0 rg ${PDF_MARGIN} ${currentY} Td (${escapePdfText(line)}) Tj ET`);
         currentY -= PDF_LINE_HEIGHT;
       });
 
-      currentCommands.push("0.90 0.92 0.95 RG");
+      currentCommands.push("0.91 0.89 0.86 RG");
       currentCommands.push(`${PDF_MARGIN} ${currentY + 4} m ${PDF_PAGE_WIDTH - PDF_MARGIN} ${currentY + 4} l S`);
       currentY -= 12;
     });

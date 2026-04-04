@@ -1,15 +1,136 @@
+/* ─────────────────────────────────────────────────
+   Extension UI – warm palette (dark mode default)
+   ───────────────────────────────────────────────── */
 html[data-cgpb-extension="true"] {
-  --cgpb-bg: rgba(17, 17, 17, 0.96);
-  --cgpb-panel: rgba(20, 20, 20, 0.94);
-  --cgpb-panel-soft: rgba(255, 255, 255, 0.04);
-  --cgpb-border: rgba(255, 255, 255, 0.1);
-  --cgpb-text: #f2f2f2;
-  --cgpb-text-soft: #a8a8a8;
-  --cgpb-accent: #f2f2f2;
-  --cgpb-accent-strong: #ffffff;
-  --cgpb-shadow: 0 12px 28px rgba(0, 0, 0, 0.18);
+  --cgpb-bg: rgba(29, 28, 24, 0.96);
+  --cgpb-panel: rgba(37, 35, 30, 0.94);
+  --cgpb-panel-soft: rgba(255, 248, 230, 0.06);
+  --cgpb-border: rgba(255, 248, 230, 0.12);
+  --cgpb-text: #ECE8E0;
+  --cgpb-text-soft: #9B968C;
+  --cgpb-accent: #ECE8E0;
+  --cgpb-accent-strong: #FFF8EE;
+  --cgpb-shadow: 0 12px 28px rgba(20, 18, 10, 0.22);
+  --cgpb-hover: rgba(255, 248, 230, 0.08);
+  --cgpb-active: rgba(255, 248, 230, 0.14);
 }
 
+/* ─────────────────────────────────────────────────
+   Claude-inspired warm theme – light mode
+   ───────────────────────────────────────────────── */
+html[data-cgpb-extension="true"]:not(.dark) {
+  --cgpb-bg: rgba(244, 241, 235, 0.96);
+  --cgpb-panel: rgba(237, 234, 227, 0.96);
+  --cgpb-panel-soft: rgba(45, 42, 38, 0.05);
+  --cgpb-border: rgba(45, 42, 38, 0.12);
+  --cgpb-text: #2D2A26;
+  --cgpb-text-soft: #78736B;
+  --cgpb-accent: #2D2A26;
+  --cgpb-accent-strong: #1A1815;
+  --cgpb-shadow: 0 12px 28px rgba(45, 42, 38, 0.10);
+  --cgpb-hover: rgba(45, 42, 38, 0.06);
+  --cgpb-active: rgba(45, 42, 38, 0.10);
+
+  --token-main-surface-primary: #F7F5F0;
+  --token-main-surface-secondary: #EFECE5;
+  --token-main-surface-tertiary: #E8E4DB;
+  --token-text-primary: #2D2A26;
+  --token-text-secondary: #6D675F;
+  --token-text-tertiary: #8F8981;
+  --token-border-light: #DDD8CF;
+  --token-border-medium: #CDC8BE;
+  --token-border-heavy: #B8B2A7;
+  --token-sidebar-surface-primary: #EDEAE3;
+  --token-sidebar-surface-secondary: #E3E0D8;
+  --token-sidebar-surface-tertiary: #D9D5CC;
+  --main-surface-primary: #F7F5F0;
+  --main-surface-secondary: #EFECE5;
+  --main-surface-tertiary: #E8E4DB;
+  --sidebar-surface-primary: #EDEAE3;
+  --sidebar-surface-secondary: #E3E0D8;
+  --text-primary: #2D2A26;
+  --text-secondary: #6D675F;
+  --border-light: #DDD8CF;
+  --border-medium: #CDC8BE;
+}
+
+/* ─────────────────────────────────────────────────
+   Claude-inspired warm theme – dark mode
+   ───────────────────────────────────────────────── */
+html[data-cgpb-extension="true"].dark {
+  --token-main-surface-primary: #1D1C18;
+  --token-main-surface-secondary: #25241E;
+  --token-main-surface-tertiary: #2E2C25;
+  --token-text-primary: #ECE8E0;
+  --token-text-secondary: #9B968C;
+  --token-text-tertiary: #7A756B;
+  --token-border-light: #38352C;
+  --token-border-medium: #4A4639;
+  --token-border-heavy: #5C5849;
+  --token-sidebar-surface-primary: #171614;
+  --token-sidebar-surface-secondary: #201F18;
+  --token-sidebar-surface-tertiary: #2A2824;
+  --main-surface-primary: #1D1C18;
+  --main-surface-secondary: #25241E;
+  --main-surface-tertiary: #2E2C25;
+  --sidebar-surface-primary: #171614;
+  --sidebar-surface-secondary: #201F18;
+  --text-primary: #ECE8E0;
+  --text-secondary: #9B968C;
+  --border-light: #38352C;
+  --border-medium: #4A4639;
+}
+
+/* ─────────────────────────────────────────────────
+   Direct fallbacks + typography + code warmth
+   ───────────────────────────────────────────────── */
+html[data-cgpb-extension="true"]:not(.dark) body {
+  background-color: #F7F5F0 !important;
+}
+
+html[data-cgpb-extension="true"].dark body {
+  background-color: #1D1C18 !important;
+}
+
+html[data-cgpb-extension="true"] main .markdown,
+html[data-cgpb-extension="true"] main [class*="markdown"] {
+  line-height: 1.72 !important;
+  letter-spacing: -0.006em !important;
+}
+
+html[data-cgpb-extension="true"]:not(.dark) main pre {
+  background-color: #EFECE5 !important;
+  border: 1px solid #DDD8CF !important;
+  border-radius: 10px !important;
+}
+
+html[data-cgpb-extension="true"]:not(.dark) main :not(pre) > code {
+  background-color: #EDE9E0 !important;
+  color: #B45309 !important;
+}
+
+html[data-cgpb-extension="true"].dark main pre {
+  background-color: #25241E !important;
+  border: 1px solid #38352C !important;
+  border-radius: 10px !important;
+}
+
+html[data-cgpb-extension="true"].dark main :not(pre) > code {
+  background-color: #2E2C25 !important;
+  color: #E0A54A !important;
+}
+
+html[data-cgpb-extension="true"]:not(.dark) main .markdown a {
+  color: #B45309 !important;
+}
+
+html[data-cgpb-extension="true"].dark main .markdown a {
+  color: #E0A54A !important;
+}
+
+/* ─────────────────────────────────────────────────
+   Performance – reduce effects
+   ───────────────────────────────────────────────── */
 html[data-cgpb-enabled="true"][data-cgpb-reduce-effects="true"] body * {
   animation-duration: 0.01ms !important;
   animation-iteration-count: 1 !important;
@@ -26,6 +147,9 @@ html[data-cgpb-enabled="true"][data-cgpb-reduce-effects="true"] body :is(
   filter: none !important;
 }
 
+/* ─────────────────────────────────────────────────
+   Turn visibility & collapsing
+   ───────────────────────────────────────────────── */
 html[data-cgpb-enabled="true"] .cgpb-managed-turn[data-cgpb-hidden="false"] {
   content-visibility: auto;
   contain: layout style paint;
@@ -52,6 +176,9 @@ html[data-cgpb-enabled="true"] .cgpb-collapsible-turn[data-cgpb-collapsed="true"
   mask-image: linear-gradient(180deg, #000 0%, #000 76%, transparent 100%);
 }
 
+/* ─────────────────────────────────────────────────
+   Inline action slots & buttons
+   ───────────────────────────────────────────────── */
 html[data-cgpb-enabled="true"] .cgpb-inline-slot {
   display: inline-flex;
   align-items: center;
@@ -75,7 +202,7 @@ html[data-cgpb-enabled="true"] .cgpb-inline-action {
   border-radius: 999px;
   min-height: 28px;
   padding: 5px 10px;
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--cgpb-panel-soft);
   color: var(--cgpb-text);
   cursor: pointer;
   font: 500 11px/1 "Segoe UI", system-ui, sans-serif;
@@ -83,7 +210,7 @@ html[data-cgpb-enabled="true"] .cgpb-inline-action {
 }
 
 html[data-cgpb-enabled="true"] .cgpb-inline-action:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--cgpb-hover);
   color: var(--cgpb-accent-strong);
 }
 
@@ -96,6 +223,9 @@ html[data-cgpb-enabled="true"] .cgpb-inline-action[data-cgpb-loading="true"] {
   animation: cgpb-pulse 900ms ease-in-out infinite;
 }
 
+/* ─────────────────────────────────────────────────
+   Reasoning quick-action bar
+   ───────────────────────────────────────────────── */
 html[data-cgpb-enabled="true"] .cgpb-reasoning-bar {
   display: inline-flex;
   align-items: center;
@@ -122,9 +252,9 @@ html[data-cgpb-enabled="true"] .cgpb-reasoning-button:hover {
 }
 
 html[data-cgpb-enabled="true"] .cgpb-reasoning-button[data-active="true"] {
-  background: rgba(255, 255, 255, 0.12);
+  background: var(--cgpb-active);
   color: var(--cgpb-accent-strong);
-  border-color: rgba(255, 255, 255, 0.2);
+  border-color: var(--cgpb-border);
 }
 
 html[data-cgpb-enabled="true"] .cgpb-reasoning-button[disabled] {
@@ -132,6 +262,9 @@ html[data-cgpb-enabled="true"] .cgpb-reasoning-button[disabled] {
   cursor: progress;
 }
 
+/* ─────────────────────────────────────────────────
+   Overlay panel
+   ───────────────────────────────────────────────── */
 #cgpb-overlay {
   position: fixed;
   right: 18px;

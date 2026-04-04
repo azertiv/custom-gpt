@@ -1,11 +1,11 @@
 :root {
   color-scheme: dark;
-  --bg: #111111;
-  --panel: #171717;
-  --line: rgba(255, 255, 255, 0.08);
-  --text: #f4f4f4;
-  --muted: #979797;
-  --accent: #d9d9d9;
+  --bg: #1D1C18;
+  --panel: #25241E;
+  --line: rgba(255, 248, 230, 0.08);
+  --text: #ECE8E0;
+  --muted: #9B968C;
+  --accent: #E0A54A;
 }
 
 * {
@@ -78,7 +78,7 @@ output {
 input[type="range"] {
   width: 100%;
   margin-top: 6px;
-  accent-color: #d0d0d0;
+  accent-color: #E0A54A;
 }
 
 .toggle-row {
@@ -122,7 +122,7 @@ input[type="range"] {
   position: absolute;
   inset: 0;
   border-radius: 999px;
-  background: #2a2a2a;
+  background: #2E2C25;
 }
 
 .slider::after {
@@ -133,8 +133,12 @@ input[type="range"] {
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background: #fafafa;
+  background: #F5F0E8;
   transition: transform 120ms ease;
+}
+
+.switch input:checked + .slider {
+  background: #C2652A;
 }
 
 .switch input:checked + .slider::after {
