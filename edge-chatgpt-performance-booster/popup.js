@@ -1,6 +1,7 @@
 const STORAGE_KEY = "cgpb-settings";
 const DEFAULT_SETTINGS = {
   enabled: true,
+  themeEnabled: true,
   visibleCount: 12,
   loadBatchSize: 10,
   trimThreshold: 18,
@@ -21,6 +22,7 @@ const formElements = {
   loadBatchSizeValue: document.getElementById("loadBatchSizeValue"),
   trimThreshold: document.getElementById("trimThreshold"),
   trimThresholdValue: document.getElementById("trimThresholdValue"),
+  themeEnabled: document.getElementById("themeEnabled"),
   reduceEffects: document.getElementById("reduceEffects"),
   showStatusBadge: document.getElementById("showStatusBadge"),
   cleanupOnSwitch: document.getElementById("cleanupOnSwitch"),
@@ -50,6 +52,7 @@ async function bootstrap() {
 function normalizeSettings(raw) {
   return {
     enabled: raw.enabled !== false,
+    themeEnabled: raw.themeEnabled !== false,
     visibleCount: clamp(raw.visibleCount, 3, 80, DEFAULT_SETTINGS.visibleCount),
     loadBatchSize: clamp(raw.loadBatchSize, 1, 40, DEFAULT_SETTINGS.loadBatchSize),
     trimThreshold: clamp(raw.trimThreshold, 6, 200, DEFAULT_SETTINGS.trimThreshold),
@@ -74,6 +77,7 @@ function clamp(value, min, max, fallback) {
 
 function render(settings) {
   formElements.enabled.checked = settings.enabled;
+  formElements.themeEnabled.checked = settings.themeEnabled;
   formElements.visibleCount.value = String(settings.visibleCount);
   formElements.visibleCountValue.textContent = String(settings.visibleCount);
   formElements.loadBatchSize.value = String(settings.loadBatchSize);
@@ -95,6 +99,7 @@ function render(settings) {
 function attachListeners() {
   [
     formElements.enabled,
+    formElements.themeEnabled,
     formElements.visibleCount,
     formElements.loadBatchSize,
     formElements.trimThreshold,
@@ -129,6 +134,7 @@ function handleInputChange() {
   saveTimer = window.setTimeout(async () => {
     const nextSettings = normalizeSettings({
       enabled: formElements.enabled.checked,
+      themeEnabled: formElements.themeEnabled.checked,
       visibleCount: formElements.visibleCount.value,
       loadBatchSize: formElements.loadBatchSize.value,
       trimThreshold: formElements.trimThreshold.value,

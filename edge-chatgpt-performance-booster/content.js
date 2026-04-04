@@ -13,6 +13,7 @@
   const LAZY_HIDDEN_ATTR = "data-cgpb-lazy-hidden";
   const DEFAULT_SETTINGS = {
     enabled: true,
+    themeEnabled: true,
     visibleCount: 12,
     loadBatchSize: 10,
     trimThreshold: 18,
@@ -89,6 +90,7 @@
   function normalizeSettings(raw) {
     return {
       enabled: raw.enabled !== false,
+      themeEnabled: raw.themeEnabled !== false,
       visibleCount: clampInteger(raw.visibleCount, 3, 80, DEFAULT_SETTINGS.visibleCount),
       loadBatchSize: clampInteger(raw.loadBatchSize, 1, 40, DEFAULT_SETTINGS.loadBatchSize),
       trimThreshold: clampInteger(raw.trimThreshold, 6, 200, DEFAULT_SETTINGS.trimThreshold),
@@ -150,7 +152,7 @@
       return;
     }
 
-    root.setAttribute("data-cgpb-extension", "true");
+    root.setAttribute("data-cgpb-extension", settings.themeEnabled ? "true" : "false");
     root.setAttribute("data-cgpb-enabled", settings.enabled ? "true" : "false");
     root.setAttribute("data-cgpb-reduce-effects", settings.enabled && settings.reduceEffects ? "true" : "false");
   }

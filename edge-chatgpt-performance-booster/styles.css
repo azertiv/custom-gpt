@@ -296,6 +296,23 @@ html[data-cgpb-extension="true"].dark #thread-bottom {
   background: #1D1C18 !important;
 }
 
+/* Sticky top header (project pages) — content-fade-top */
+html[data-cgpb-extension="true"]:not(.dark) .content-fade-top {
+  background: #F7F5F0 !important;
+}
+html[data-cgpb-extension="true"].dark .content-fade-top {
+  background: #1D1C18 !important;
+}
+
+html[data-cgpb-extension="true"]:not(.dark) .content-fade-top::before,
+html[data-cgpb-extension="true"]:not(.dark) .content-fade-top::after {
+  background: linear-gradient(to top, rgba(247, 245, 240, 0), #F7F5F0) !important;
+}
+html[data-cgpb-extension="true"].dark .content-fade-top::before,
+html[data-cgpb-extension="true"].dark .content-fade-top::after {
+  background: linear-gradient(to top, rgba(29, 28, 24, 0), #1D1C18) !important;
+}
+
 /* ═══════════════════════════════════════════════════════
    6. Typography — readability for message content
    ═══════════════════════════════════════════════════════ */
