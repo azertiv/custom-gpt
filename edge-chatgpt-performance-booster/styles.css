@@ -1,6 +1,18 @@
-/* ─────────────────────────────────────────────────
-   Extension UI – warm palette (dark mode default)
-   ───────────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════
+   1. Global font override — replace Söhne with system
+   ═══════════════════════════════════════════════════════ */
+html[data-cgpb-extension="true"],
+html[data-cgpb-extension="true"] body,
+html[data-cgpb-extension="true"] input,
+html[data-cgpb-extension="true"] textarea,
+html[data-cgpb-extension="true"] button,
+html[data-cgpb-extension="true"] select {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+}
+
+/* ═══════════════════════════════════════════════════════
+   2. Extension UI variables — warm palette
+   ═══════════════════════════════════════════════════════ */
 html[data-cgpb-extension="true"] {
   --cgpb-bg: rgba(29, 28, 24, 0.96);
   --cgpb-panel: rgba(37, 35, 30, 0.94);
@@ -15,10 +27,11 @@ html[data-cgpb-extension="true"] {
   --cgpb-active: rgba(255, 248, 230, 0.14);
 }
 
-/* ─────────────────────────────────────────────────
-   Claude-inspired warm theme – light mode
-   ───────────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════
+   3. ChatGPT token + UI variables — LIGHT mode
+   ═══════════════════════════════════════════════════════ */
 html[data-cgpb-extension="true"]:not(.dark) {
+  /* Extension UI – light overrides */
   --cgpb-bg: rgba(244, 241, 235, 0.96);
   --cgpb-panel: rgba(237, 234, 227, 0.96);
   --cgpb-panel-soft: rgba(45, 42, 38, 0.05);
@@ -31,106 +44,247 @@ html[data-cgpb-extension="true"]:not(.dark) {
   --cgpb-hover: rgba(45, 42, 38, 0.06);
   --cgpb-active: rgba(45, 42, 38, 0.10);
 
-  --token-main-surface-primary: #F7F5F0;
-  --token-main-surface-secondary: #EFECE5;
-  --token-main-surface-tertiary: #E8E4DB;
-  --token-text-primary: #2D2A26;
-  --token-text-secondary: #6D675F;
-  --token-text-tertiary: #8F8981;
-  --token-border-light: #DDD8CF;
-  --token-border-medium: #CDC8BE;
-  --token-border-heavy: #B8B2A7;
-  --token-sidebar-surface-primary: #EDEAE3;
-  --token-sidebar-surface-secondary: #E3E0D8;
-  --token-sidebar-surface-tertiary: #D9D5CC;
-  --main-surface-primary: #F7F5F0;
-  --main-surface-secondary: #EFECE5;
-  --main-surface-tertiary: #E8E4DB;
-  --sidebar-surface-primary: #EDEAE3;
-  --sidebar-surface-secondary: #E3E0D8;
-  --text-primary: #2D2A26;
-  --text-secondary: #6D675F;
-  --border-light: #DDD8CF;
-  --border-medium: #CDC8BE;
+  /* ChatGPT token surfaces */
+  --main-surface-primary: #F7F5F0 !important;
+  --main-surface-secondary: #EFECE5 !important;
+  --main-surface-tertiary: #E8E4DB !important;
+  --token-main-surface-primary: #F7F5F0 !important;
+  --token-main-surface-secondary: #EFECE5 !important;
+  --token-main-surface-tertiary: #E8E4DB !important;
+
+  /* ChatGPT background tokens */
+  --bg-primary: #FFFFFF !important;
+  --bg-secondary: #F7F5F0 !important;
+  --bg-elevated-secondary: #EDEAE3 !important;
+  --token-bg-primary: #FFFFFF !important;
+  --token-bg-secondary: #F7F5F0 !important;
+  --token-bg-elevated-secondary: #EDEAE3 !important;
+
+  /* ChatGPT sidebar tokens */
+  --sidebar-bg: #EDEAE3 !important;
+  --sidebar-mask-bg: #EDEAE3 !important;
+  --sidebar-surface-primary: #EDEAE3 !important;
+  --sidebar-surface-secondary: #E3E0D8 !important;
+  --sidebar-surface-tertiary: #D9D5CC !important;
+  --token-sidebar-surface-primary: #EDEAE3 !important;
+  --token-sidebar-surface-secondary: #E3E0D8 !important;
+  --token-sidebar-surface-tertiary: #D9D5CC !important;
+
+  /* ChatGPT text tokens */
+  --text-primary: #2D2A26 !important;
+  --text-secondary: #6D675F !important;
+  --text-tertiary: #8F8981 !important;
+  --token-text-primary: #2D2A26 !important;
+  --token-text-secondary: #6D675F !important;
+  --token-text-tertiary: #8F8981 !important;
+
+  /* ChatGPT border tokens */
+  --border-light: #DDD8CF !important;
+  --border-medium: #CDC8BE !important;
+  --border-heavy: #B8B2A7 !important;
+  --token-border-light: #DDD8CF !important;
+  --token-border-medium: #CDC8BE !important;
+  --token-border-heavy: #B8B2A7 !important;
+
+  /* ChatGPT interactive surfaces */
+  --surface-hover: rgba(45, 42, 38, 0.06) !important;
+  --token-surface-hover: rgba(45, 42, 38, 0.06) !important;
 }
 
-/* ─────────────────────────────────────────────────
-   Claude-inspired warm theme – dark mode
-   ───────────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════
+   4. ChatGPT token + UI variables — DARK mode
+   ═══════════════════════════════════════════════════════ */
 html[data-cgpb-extension="true"].dark {
-  --token-main-surface-primary: #1D1C18;
-  --token-main-surface-secondary: #25241E;
-  --token-main-surface-tertiary: #2E2C25;
-  --token-text-primary: #ECE8E0;
-  --token-text-secondary: #9B968C;
-  --token-text-tertiary: #7A756B;
-  --token-border-light: #38352C;
-  --token-border-medium: #4A4639;
-  --token-border-heavy: #5C5849;
-  --token-sidebar-surface-primary: #171614;
-  --token-sidebar-surface-secondary: #201F18;
-  --token-sidebar-surface-tertiary: #2A2824;
-  --main-surface-primary: #1D1C18;
-  --main-surface-secondary: #25241E;
-  --main-surface-tertiary: #2E2C25;
-  --sidebar-surface-primary: #171614;
-  --sidebar-surface-secondary: #201F18;
-  --text-primary: #ECE8E0;
-  --text-secondary: #9B968C;
-  --border-light: #38352C;
-  --border-medium: #4A4639;
+  /* ChatGPT token surfaces */
+  --main-surface-primary: #1D1C18 !important;
+  --main-surface-secondary: #25241E !important;
+  --main-surface-tertiary: #2E2C25 !important;
+  --token-main-surface-primary: #1D1C18 !important;
+  --token-main-surface-secondary: #25241E !important;
+  --token-main-surface-tertiary: #2E2C25 !important;
+
+  /* ChatGPT background tokens */
+  --bg-primary: #2A2824 !important;
+  --bg-secondary: #1D1C18 !important;
+  --bg-elevated-secondary: #171614 !important;
+  --token-bg-primary: #2A2824 !important;
+  --token-bg-secondary: #1D1C18 !important;
+  --token-bg-elevated-secondary: #171614 !important;
+
+  /* ChatGPT sidebar tokens */
+  --sidebar-bg: #171614 !important;
+  --sidebar-mask-bg: #171614 !important;
+  --sidebar-surface-primary: #171614 !important;
+  --sidebar-surface-secondary: #201F18 !important;
+  --sidebar-surface-tertiary: #2A2824 !important;
+  --token-sidebar-surface-primary: #171614 !important;
+  --token-sidebar-surface-secondary: #201F18 !important;
+  --token-sidebar-surface-tertiary: #2A2824 !important;
+
+  /* ChatGPT text tokens */
+  --text-primary: #ECE8E0 !important;
+  --text-secondary: #9B968C !important;
+  --text-tertiary: #7A756B !important;
+  --token-text-primary: #ECE8E0 !important;
+  --token-text-secondary: #9B968C !important;
+  --token-text-tertiary: #7A756B !important;
+
+  /* ChatGPT border tokens */
+  --border-light: #38352C !important;
+  --border-medium: #4A4639 !important;
+  --border-heavy: #5C5849 !important;
+  --token-border-light: #38352C !important;
+  --token-border-medium: #4A4639 !important;
+  --token-border-heavy: #5C5849 !important;
+
+  /* ChatGPT interactive surfaces */
+  --surface-hover: rgba(255, 248, 230, 0.06) !important;
+  --token-surface-hover: rgba(255, 248, 230, 0.06) !important;
 }
 
-/* ─────────────────────────────────────────────────
-   Direct fallbacks + typography + code warmth
-   ───────────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════
+   5. Direct element overrides (body, sidebar, header,
+      composer, gradients, avatar)
+   ═══════════════════════════════════════════════════════ */
+
+/* Body background + text color */
 html[data-cgpb-extension="true"]:not(.dark) body {
   background-color: #F7F5F0 !important;
+  color: #2D2A26 !important;
+}
+html[data-cgpb-extension="true"].dark body {
+  background-color: #1D1C18 !important;
+  color: #ECE8E0 !important;
 }
 
-html[data-cgpb-extension="true"].dark body {
+/* Sidebar container (#stage-slideover-sidebar) */
+html[data-cgpb-extension="true"]:not(.dark) #stage-slideover-sidebar {
+  background-color: #EDEAE3 !important;
+}
+html[data-cgpb-extension="true"].dark #stage-slideover-sidebar {
+  background-color: #171614 !important;
+}
+
+/* Sidebar nav scrollable inner area */
+html[data-cgpb-extension="true"]:not(.dark) #stage-slideover-sidebar nav {
+  background-color: #EDEAE3 !important;
+}
+html[data-cgpb-extension="true"].dark #stage-slideover-sidebar nav {
+  background-color: #171614 !important;
+}
+
+/* Sidebar bottom sticky section */
+html[data-cgpb-extension="true"]:not(.dark) nav .sticky.bottom-0 {
+  background-color: #EDEAE3 !important;
+}
+html[data-cgpb-extension="true"].dark nav .sticky.bottom-0 {
+  background-color: #171614 !important;
+}
+
+/* Sidebar bottom fade gradient (hardcoded rgb(249,249,249) / rgb(24,24,24)) */
+html[data-cgpb-extension="true"]:not(.dark) nav .sticky.bottom-0 > .pointer-events-none > [aria-hidden] {
+  background: linear-gradient(180deg, rgba(237, 234, 227, 0) 33.6%, rgb(237, 234, 227) 115%) !important;
+}
+html[data-cgpb-extension="true"].dark nav .sticky.bottom-0 > .pointer-events-none > [aria-hidden] {
+  background: linear-gradient(180deg, rgba(23, 22, 20, 0) 0%, rgba(23, 22, 20, 0.28) 56%, rgba(23, 22, 20, 0.62) 84%, rgb(23, 22, 20) 100%) !important;
+}
+
+/* Page header */
+html[data-cgpb-extension="true"]:not(.dark) #page-header {
+  background-color: #F7F5F0 !important;
+}
+html[data-cgpb-extension="true"].dark #page-header {
   background-color: #1D1C18 !important;
 }
 
+/* Composer surface — override hardcoded dark:bg-[#303030] */
+html[data-cgpb-extension="true"]:not(.dark) [data-composer-surface="true"] {
+  background-color: #FFFFFF !important;
+  box-shadow: 0 2px 12px rgba(45, 42, 38, 0.08) !important;
+}
+html[data-cgpb-extension="true"].dark [data-composer-surface="true"] {
+  background-color: #2A2824 !important;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.25) !important;
+}
+
+/* Thread/main content area */
+html[data-cgpb-extension="true"]:not(.dark) #thread {
+  background-color: #F7F5F0 !important;
+}
+html[data-cgpb-extension="true"].dark #thread {
+  background-color: #1D1C18 !important;
+}
+
+/* Scroll root */
+html[data-cgpb-extension="true"]:not(.dark) [data-scroll-root] {
+  background-color: #F7F5F0 !important;
+}
+html[data-cgpb-extension="true"].dark [data-scroll-root] {
+  background-color: #1D1C18 !important;
+}
+
+/* Avatar placeholder */
+html[data-cgpb-extension="true"] .bg-gray-500\/30 {
+  background-color: rgba(139, 132, 120, 0.3) !important;
+}
+
+/* ═══════════════════════════════════════════════════════
+   6. Typography — readability for message content
+   ═══════════════════════════════════════════════════════ */
 html[data-cgpb-extension="true"] main .markdown,
-html[data-cgpb-extension="true"] main [class*="markdown"] {
+html[data-cgpb-extension="true"] main [class*="markdown"],
+html[data-cgpb-extension="true"] main [class*="prose"] {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
   line-height: 1.72 !important;
   letter-spacing: -0.006em !important;
 }
 
+/* ═══════════════════════════════════════════════════════
+   7. Code blocks & inline code
+   ═══════════════════════════════════════════════════════ */
+
+/* Light: warm border, keep dark code bg */
 html[data-cgpb-extension="true"]:not(.dark) main pre {
-  background-color: #EFECE5 !important;
   border: 1px solid #DDD8CF !important;
   border-radius: 10px !important;
 }
 
-html[data-cgpb-extension="true"]:not(.dark) main :not(pre) > code {
-  background-color: #EDE9E0 !important;
-  color: #B45309 !important;
-}
-
+/* Dark: warm tinted code bg */
 html[data-cgpb-extension="true"].dark main pre {
-  background-color: #25241E !important;
+  background-color: #1D1B16 !important;
   border: 1px solid #38352C !important;
   border-radius: 10px !important;
 }
 
+/* Inline code — light */
+html[data-cgpb-extension="true"]:not(.dark) main :not(pre) > code {
+  background-color: #EDE9E0 !important;
+  color: #B45309 !important;
+  padding: 1px 5px !important;
+  border-radius: 4px !important;
+}
+
+/* Inline code — dark */
 html[data-cgpb-extension="true"].dark main :not(pre) > code {
   background-color: #2E2C25 !important;
   color: #E0A54A !important;
+  padding: 1px 5px !important;
+  border-radius: 4px !important;
 }
 
+/* ═══════════════════════════════════════════════════════
+   8. Links — warm accent in message content
+   ═══════════════════════════════════════════════════════ */
 html[data-cgpb-extension="true"]:not(.dark) main .markdown a {
   color: #B45309 !important;
 }
-
 html[data-cgpb-extension="true"].dark main .markdown a {
   color: #E0A54A !important;
 }
 
-/* ─────────────────────────────────────────────────
-   Performance – reduce effects
-   ───────────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════
+   9. Performance — reduce effects
+   ═══════════════════════════════════════════════════════ */
 html[data-cgpb-enabled="true"][data-cgpb-reduce-effects="true"] body * {
   animation-duration: 0.01ms !important;
   animation-iteration-count: 1 !important;
@@ -147,9 +301,9 @@ html[data-cgpb-enabled="true"][data-cgpb-reduce-effects="true"] body :is(
   filter: none !important;
 }
 
-/* ─────────────────────────────────────────────────
-   Turn visibility & collapsing
-   ───────────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════
+   10. Turn visibility
+   ═══════════════════════════════════════════════════════ */
 html[data-cgpb-enabled="true"] .cgpb-managed-turn[data-cgpb-hidden="false"] {
   content-visibility: auto;
   contain: layout style paint;
@@ -160,118 +314,16 @@ html[data-cgpb-enabled="true"] .cgpb-managed-turn[data-cgpb-hidden="true"] {
   display: none !important;
 }
 
-html[data-cgpb-enabled="true"] .cgpb-collapsible-turn {
-  position: relative;
-}
-
-html[data-cgpb-enabled="true"] .cgpb-long-reply-target {
-  transition: max-height 120ms ease;
-}
-
-html[data-cgpb-enabled="true"] .cgpb-collapsible-turn[data-cgpb-collapsed="true"] .cgpb-long-reply-target {
-  position: relative;
-  max-height: 320px;
-  overflow: hidden;
-  -webkit-mask-image: linear-gradient(180deg, #000 0%, #000 76%, transparent 100%);
-  mask-image: linear-gradient(180deg, #000 0%, #000 76%, transparent 100%);
-}
-
-/* ─────────────────────────────────────────────────
-   Inline action slots & buttons
-   ───────────────────────────────────────────────── */
-html[data-cgpb-enabled="true"] .cgpb-inline-slot {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  margin-left: 6px;
-  flex-shrink: 0;
-  pointer-events: auto;
-  position: relative;
-  z-index: 1;
-}
-
-html[data-cgpb-enabled="true"] .cgpb-inline-slot-fallback {
-  display: flex;
-  margin-top: 10px;
-}
-
-html[data-cgpb-enabled="true"] .cgpb-inline-action {
-  appearance: none;
-  border: 1px solid var(--cgpb-border);
-  border-radius: 999px;
-  min-height: 28px;
-  padding: 5px 10px;
-  background: var(--cgpb-panel-soft);
-  color: var(--cgpb-text);
-  cursor: pointer;
-  font: 500 11px/1 "Segoe UI", system-ui, sans-serif;
-  white-space: nowrap;
-}
-
-html[data-cgpb-enabled="true"] .cgpb-inline-action:hover {
-  background: var(--cgpb-hover);
-  color: var(--cgpb-accent-strong);
-}
-
-html[data-cgpb-enabled="true"] .cgpb-inline-action[disabled] {
-  cursor: progress;
-  opacity: 0.56;
-}
-
-html[data-cgpb-enabled="true"] .cgpb-inline-action[data-cgpb-loading="true"] {
-  animation: cgpb-pulse 900ms ease-in-out infinite;
-}
-
-/* ─────────────────────────────────────────────────
-   Reasoning quick-action bar
-   ───────────────────────────────────────────────── */
-html[data-cgpb-enabled="true"] .cgpb-reasoning-bar {
-  display: inline-flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-left: 8px;
-}
-
-html[data-cgpb-enabled="true"] .cgpb-reasoning-button {
-  appearance: none;
-  border: 1px solid var(--cgpb-border);
-  border-radius: 999px;
-  padding: 6px 10px;
-  background: transparent;
-  color: var(--cgpb-text-soft);
-  cursor: pointer;
-  font: 500 11px/1 "Segoe UI", system-ui, sans-serif;
-  white-space: nowrap;
-}
-
-html[data-cgpb-enabled="true"] .cgpb-reasoning-button:hover {
-  background: var(--cgpb-panel-soft);
-  color: var(--cgpb-text);
-}
-
-html[data-cgpb-enabled="true"] .cgpb-reasoning-button[data-active="true"] {
-  background: var(--cgpb-active);
-  color: var(--cgpb-accent-strong);
-  border-color: var(--cgpb-border);
-}
-
-html[data-cgpb-enabled="true"] .cgpb-reasoning-button[disabled] {
-  opacity: 0.56;
-  cursor: progress;
-}
-
-/* ─────────────────────────────────────────────────
-   Overlay panel
-   ───────────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════════════
+   11. Overlay panel
+   ═══════════════════════════════════════════════════════ */
 #cgpb-overlay {
   position: fixed;
   right: 18px;
   bottom: 18px;
   z-index: 2147483647;
   width: auto;
-  font-family: "Segoe UI", system-ui, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 #cgpb-overlay[hidden] {
@@ -324,13 +376,3 @@ html[data-cgpb-enabled="true"] .cgpb-reasoning-button[disabled] {
   }
 }
 
-@keyframes cgpb-pulse {
-  0%,
-  100% {
-    opacity: 0.5;
-  }
-
-  50% {
-    opacity: 1;
-  }
-}

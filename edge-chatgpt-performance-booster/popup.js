@@ -5,8 +5,7 @@ const DEFAULT_SETTINGS = {
   loadBatchSize: 10,
   trimThreshold: 18,
   showStatusBadge: true,
-  reduceEffects: true,
-  pdfExportEnabled: true
+  reduceEffects: true
 };
 
 const formElements = {
@@ -19,7 +18,6 @@ const formElements = {
   trimThresholdValue: document.getElementById("trimThresholdValue"),
   reduceEffects: document.getElementById("reduceEffects"),
   showStatusBadge: document.getElementById("showStatusBadge"),
-  pdfExportEnabled: document.getElementById("pdfExportEnabled"),
   resetDefaults: document.getElementById("resetDefaults"),
   status: document.getElementById("status")
 };
@@ -43,8 +41,7 @@ function normalizeSettings(raw) {
     loadBatchSize: clamp(raw.loadBatchSize, 1, 40, DEFAULT_SETTINGS.loadBatchSize),
     trimThreshold: clamp(raw.trimThreshold, 6, 200, DEFAULT_SETTINGS.trimThreshold),
     showStatusBadge: raw.showStatusBadge !== false,
-    reduceEffects: raw.reduceEffects !== false,
-    pdfExportEnabled: raw.pdfExportEnabled !== false
+    reduceEffects: raw.reduceEffects !== false
   };
 }
 
@@ -70,7 +67,6 @@ function render(settings) {
   formElements.trimThresholdValue.textContent = String(settings.trimThreshold);
   formElements.reduceEffects.checked = settings.reduceEffects;
   formElements.showStatusBadge.checked = settings.showStatusBadge;
-  formElements.pdfExportEnabled.checked = settings.pdfExportEnabled;
 }
 
 function attachListeners() {
@@ -80,8 +76,7 @@ function attachListeners() {
     formElements.loadBatchSize,
     formElements.trimThreshold,
     formElements.reduceEffects,
-    formElements.showStatusBadge,
-    formElements.pdfExportEnabled
+    formElements.showStatusBadge
   ].forEach((element) => {
     element.addEventListener("input", handleInputChange);
     element.addEventListener("change", handleInputChange);
@@ -110,8 +105,7 @@ function handleInputChange() {
       loadBatchSize: formElements.loadBatchSize.value,
       trimThreshold: formElements.trimThreshold.value,
       reduceEffects: formElements.reduceEffects.checked,
-      showStatusBadge: formElements.showStatusBadge.checked,
-      pdfExportEnabled: formElements.pdfExportEnabled.checked
+      showStatusBadge: formElements.showStatusBadge.checked
     });
 
     await chrome.storage.local.set({ [STORAGE_KEY]: nextSettings });
