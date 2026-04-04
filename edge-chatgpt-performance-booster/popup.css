@@ -17,7 +17,7 @@ body {
   min-width: 280px;
   background: var(--bg);
   color: var(--text);
-  font: 12px/1.4 "Segoe UI", system-ui, sans-serif;
+  font: 12px/1.4 "Inter", "Segoe UI", system-ui, sans-serif;
 }
 
 .popup {

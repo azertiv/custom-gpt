@@ -1,13 +1,28 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
 /* ═══════════════════════════════════════════════════════
-   1. Global font override — replace Söhne with system
+   1. Global font override — Inter (Claude-like)
    ═══════════════════════════════════════════════════════ */
 html[data-cgpb-extension="true"],
 html[data-cgpb-extension="true"] body,
+html[data-cgpb-extension="true"] main,
+html[data-cgpb-extension="true"] nav,
+html[data-cgpb-extension="true"] header,
 html[data-cgpb-extension="true"] input,
 html[data-cgpb-extension="true"] textarea,
 html[data-cgpb-extension="true"] button,
-html[data-cgpb-extension="true"] select {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+html[data-cgpb-extension="true"] select,
+html[data-cgpb-extension="true"] p,
+html[data-cgpb-extension="true"] span,
+html[data-cgpb-extension="true"] a,
+html[data-cgpb-extension="true"] div,
+html[data-cgpb-extension="true"] h1,
+html[data-cgpb-extension="true"] h2,
+html[data-cgpb-extension="true"] h3,
+html[data-cgpb-extension="true"] h4,
+html[data-cgpb-extension="true"] label,
+html[data-cgpb-extension="true"] li {
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
 }
 
 /* ═══════════════════════════════════════════════════════
@@ -53,10 +68,10 @@ html[data-cgpb-extension="true"]:not(.dark) {
   --token-main-surface-tertiary: #E8E4DB !important;
 
   /* ChatGPT background tokens */
-  --bg-primary: #F4F1EB !important;
+  --bg-primary: #FFFFFF !important;
   --bg-secondary: #F7F5F0 !important;
   --bg-elevated-secondary: #EDEAE3 !important;
-  --token-bg-primary: #F4F1EB !important;
+  --token-bg-primary: #FFFFFF !important;
   --token-bg-secondary: #F7F5F0 !important;
   --token-bg-elevated-secondary: #EDEAE3 !important;
 
@@ -197,14 +212,26 @@ html[data-cgpb-extension="true"].dark #page-header {
   background-color: #1D1C18 !important;
 }
 
-/* Composer surface — override hardcoded dark:bg-[#303030] */
+/* Composer surface — white input field */
 html[data-cgpb-extension="true"]:not(.dark) [data-composer-surface="true"] {
-  background-color: #F4F1EB !important;
+  background-color: #FFFFFF !important;
   box-shadow: 0 2px 12px rgba(45, 42, 38, 0.06) !important;
 }
 html[data-cgpb-extension="true"].dark [data-composer-surface="true"] {
   background-color: #2A2824 !important;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.25) !important;
+}
+
+/* User message bubbles — darker beige like Claude */
+html[data-cgpb-extension="true"]:not(.dark) [data-message-author-role="user"] {
+  background-color: #EDE5D8 !important;
+  border-radius: 18px !important;
+  padding: 12px 16px !important;
+}
+html[data-cgpb-extension="true"].dark [data-message-author-role="user"] {
+  background-color: #2E2B24 !important;
+  border-radius: 18px !important;
+  padding: 12px 16px !important;
 }
 
 /* Thread/main content area */
@@ -230,7 +257,7 @@ html[data-cgpb-extension="true"] .bg-gray-500\/30 {
 
 /* Composer — target Tailwind class directly (bg-token-bg-primary) */
 html[data-cgpb-extension="true"]:not(.dark) .bg-token-bg-primary {
-  background-color: #F4F1EB !important;
+  background-color: #FFFFFF !important;
 }
 html[data-cgpb-extension="true"].dark .bg-token-bg-primary {
   background-color: #2A2824 !important;
@@ -275,7 +302,7 @@ html[data-cgpb-extension="true"].dark #thread-bottom {
 html[data-cgpb-extension="true"] main .markdown,
 html[data-cgpb-extension="true"] main [class*="markdown"],
 html[data-cgpb-extension="true"] main [class*="prose"] {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
   line-height: 1.72 !important;
   letter-spacing: -0.006em !important;
 }
@@ -364,7 +391,7 @@ html[data-cgpb-enabled="true"] .cgpb-managed-turn[data-cgpb-hidden="true"] {
   bottom: 18px;
   z-index: 2147483647;
   width: auto;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 #cgpb-overlay[hidden] {
