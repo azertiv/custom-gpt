@@ -485,29 +485,72 @@
   }
 
   function getLikelyActionBar(turn) {
+    // 1. Exact ARIA selector (older ChatGPT versions)
     const exactMatch = turn.querySelector('[aria-label="Response actions"][role="group"]');
     if (exactMatch instanceof HTMLElement) {
       return exactMatch;
     }
 
+    // 2. Detect by known response-action aria-labels — works even when buttons are
+    //    hidden via display:none (hover-only via Tailwind group-hover classes).
+    const ACTION_LABEL_RE = /^(copy|thumbs up|thumbs down|good response|bad response|read aloud|regenerate|share|edit message|more actions)/i;
+    const labelledButtons = Array.from(turn.querySelectorAll("button[aria-label]")).filter((btn) => {
+      if (btn.closest("#cgpb-overlay") || btn.closest(".cgpb-inline-slot") || btn.closest("pre")) {
+        return false;
+      }
+      return ACTION_LABEL_RE.test(btn.getAttribute("aria-label") || "");
+    });
+
+    if (labelledButtons.length >= 1) {
+      const parentMap = new Map();
+      labelledButtons.forEach((btn) => {
+        let p = btn.parentElement;
+        while (p && p !== turn) {
+          parentMap.set(p, (parentMap.get(p) || 0) + 1);
+          p = p.parentElement;
+        }
+      });
+      // Prefer the deepest ancestor that contains at least 2 action buttons
+      // (or 1 if that's all we have).
+      let best = null;
+      parentMap.forEach((count, el) => {
+        if (count >= Math.min(2, labelledButtons.length)) {
+          if (!best || best.contains(el)) {
+            best = el;
+          }
+        }
+      });
+      if (best instanceof HTMLElement) {
+        return best;
+      }
+      const fallbackParent = labelledButtons[0]?.parentElement;
+      if (fallbackParent instanceof HTMLElement && fallbackParent !== turn) {
+        return fallbackParent;
+      }
+    }
+
+    // 3. Position-based fallback — only considers rendered (non-zero height) buttons.
     const buttons = Array.from(turn.querySelectorAll("button")).filter((button) => {
       if (!(button instanceof HTMLButtonElement)) {
         return false;
       }
-
       if (button.closest("#cgpb-overlay") || button.closest(".cgpb-inline-slot") || button.closest("pre")) {
         return false;
       }
-
-      return button.getClientRects().length > 0;
+      return true;
     });
 
     if (!buttons.length) {
       return null;
     }
 
-    const maxBottom = Math.max(...buttons.map((button) => button.getBoundingClientRect().bottom));
-    const bottomButtons = buttons.filter((button) => maxBottom - button.getBoundingClientRect().bottom < 24);
+    const visibleButtons = buttons.filter((button) => button.getBoundingClientRect().height > 0);
+    if (visibleButtons.length < 2) {
+      return null;
+    }
+
+    const maxBottom = Math.max(...visibleButtons.map((button) => button.getBoundingClientRect().bottom));
+    const bottomButtons = visibleButtons.filter((button) => maxBottom - button.getBoundingClientRect().bottom < 24);
     if (bottomButtons.length < 2) {
       return null;
     }
@@ -791,10 +834,20 @@
         const removeButton = getReasoningPillRemoveButton();
         if (removeButton instanceof HTMLButtonElement) {
           removeButton.click();
-          await wait(120);
+          await wait(300);
           scheduleRefresh();
+        }
+        // If no remove button exists we're already in Instant mode.
+        return;
+      }
+
+      // For Thinking / Pro: ensure a thinking pill is present first.
+      if (!(getReasoningPillTrigger() instanceof HTMLButtonElement)) {
+        const enabled = await tryEnableThinking();
+        if (!enabled) {
           return;
         }
+        await wait(300);
       }
 
       const menuOpened = await openReasoningMenu();
@@ -802,28 +855,41 @@
         return;
       }
 
-      let option = findReasoningOption(label);
-      if (!(option instanceof HTMLElement) && label === "Thinking") {
-        option = findReasoningOption("Extended thinking");
+      // Build a list of candidate label strings to try, from most specific
+      // to most generic, so the first match wins.
+      const labelCandidates =
+        label === "Thinking"
+          ? ["Thinking", "Extended thinking", "Think", "Auto", "Default"]
+          : ["Pro", "High", "Max", "Extended thinking +"];
+
+      let option = null;
+      for (const candidate of labelCandidates) {
+        option = findReasoningOption(candidate);
+        if (option instanceof HTMLElement) {
+          break;
+        }
       }
 
+      // If still not found, wait for the portal to fully render and retry.
       if (!(option instanceof HTMLElement)) {
-        await wait(180);
-        option = findReasoningOption(label);
-        if (!(option instanceof HTMLElement) && label === "Thinking") {
-          option = findReasoningOption("Extended thinking");
+        await wait(300);
+        for (const candidate of labelCandidates) {
+          option = findReasoningOption(candidate);
+          if (option instanceof HTMLElement) {
+            break;
+          }
         }
       }
 
       if (option instanceof HTMLElement) {
         option.click();
-        await wait(120);
+        await wait(300);
         scheduleRefresh();
       }
     } finally {
       window.setTimeout(() => {
         button.disabled = false;
-      }, 180);
+      }, 350);
     }
   }
 
@@ -866,6 +932,19 @@
   }
 
   function getReasoningPillTrigger() {
+    // Prefer the CSS-class selector — most robust across ChatGPT versions.
+    const pillByClass = document.querySelector('[data-testid="composer-footer-actions"] button.__composer-pill');
+    if (pillByClass instanceof HTMLButtonElement && isElementVisible(pillByClass)) {
+      return pillByClass;
+    }
+
+    // Any button with a dropdown menu inside the footer area.
+    const pillByMenu = document.querySelector('[data-testid="composer-footer-actions"] button[aria-haspopup="menu"]');
+    if (pillByMenu instanceof HTMLButtonElement && isElementVisible(pillByMenu)) {
+      return pillByMenu;
+    }
+
+    // Text-based fallback.
     const candidates = document.querySelectorAll(
       '[data-testid="composer-footer-actions"] .__composer-pill, [data-testid="composer-footer-actions"] button'
     );
@@ -925,8 +1004,63 @@
     }
 
     trigger.click();
-    await wait(120);
+
+    // Poll for aria-expanded to become "true" — Radix UI portals can take
+    // several animation frames to mount the menu content.
+    for (let i = 0; i < 8; i++) {
+      await wait(80);
+      if (trigger.getAttribute("aria-expanded") === "true") {
+        return true;
+      }
+    }
+
+    // Return true anyway: the menu may have opened even if the attribute
+    // hasn't updated yet (e.g. uncontrolled component).
     return true;
+  }
+
+  // Attempt to enable Extended Thinking when no pill is currently shown
+  // (i.e. the user is in "Instant" / no-thinking mode).
+  async function tryEnableThinking() {
+    const footerArea = document.querySelector('[data-testid="composer-footer-actions"]');
+    if (footerArea instanceof HTMLElement) {
+      for (const btn of footerArea.querySelectorAll("button")) {
+        if (!(btn instanceof HTMLButtonElement)) {
+          continue;
+        }
+        const label = (btn.getAttribute("aria-label") || "").toLowerCase();
+        const text = (btn.textContent || "").replace(/\s+/g, " ").trim().toLowerCase();
+        // Don't accidentally click the remove button of an existing pill.
+        if (label.includes("remove")) {
+          continue;
+        }
+        if (label.includes("think") || text.includes("think")) {
+          btn.click();
+          return true;
+        }
+      }
+    }
+
+    // Broader search: any thinking-related button inside the composer form.
+    const composerForm = document.querySelector("form");
+    if (composerForm instanceof HTMLElement) {
+      const thinkBtns = Array.from(
+        composerForm.querySelectorAll('button[aria-label*="think" i], button[aria-label*="reason" i]')
+      );
+      for (const btn of thinkBtns) {
+        if (btn.closest("#cgpb-overlay") || btn.closest(".cgpb-inline-slot")) {
+          continue;
+        }
+        const label = (btn.getAttribute("aria-label") || "").toLowerCase();
+        if (label.includes("remove")) {
+          continue;
+        }
+        btn.click();
+        return true;
+      }
+    }
+
+    return false;
   }
 
   function isElementVisible(element) {
